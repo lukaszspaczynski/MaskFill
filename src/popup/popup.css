@@ -1,0 +1,46 @@
+:root {
+  color-scheme: light dark;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 12px 14px;
+  min-width: 240px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.subtle {
+  margin: 2px 0 10px;
+  color: color-mix(in srgb, currentColor 55%, transparent);
+  overflow-wrap: anywhere;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+}
+
+dt {
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.error {
+  color: #d1242f;
+}
+
+button {
+  width: 100%;
+}

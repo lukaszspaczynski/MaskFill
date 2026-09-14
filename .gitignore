@@ -1,0 +1,13 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude/.headroom_*

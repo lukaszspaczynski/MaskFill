@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Page Info Settings</title>
+    <link rel="stylesheet" href="../popup/popup.css" />
+    <style>
+      body { min-width: 320px; }
+      label { display: block; margin-bottom: 6px; }
+      textarea { width: 100%; box-sizing: border-box; min-height: 80px; }
+    </style>
+  </head>
+  <body>
+    <h1>Page Info Settings</h1>
+
+    <label><input type="checkbox" id="countWords" /> Count words</label>
+    <label><input type="checkbox" id="countLinks" /> Count links</label>
+    <label><input type="checkbox" id="countImages" /> Count images</label>
+
+    <p class="subtle">Blocked hosts, one per line. Subdomains are included.</p>
+    <textarea id="blockedHosts" spellcheck="false"></textarea>
+
+    <p id="status" class="subtle" role="status"></p>
+    <script src="../shared/settings.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
