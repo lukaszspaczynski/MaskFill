@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ING Mask Fill",
   "version": "1.0",
-  "description": "Fills the masked-password characters ING asks for, from a password held in the macOS Keychain.",
+  "description": "Wypełnia znaki maskowanego hasła, o które pyta ING — z menedżera haseł lub z hasła zapisanego w pęku kluczy.",
 
   "icons": {
     "48": "images/icon-48.png",

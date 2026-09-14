@@ -454,6 +454,7 @@
 					"-framework",
 					SafariServices,
 				);
+				DEVELOPMENT_TEAM = 6U542ZN2VK;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill.Extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -488,6 +489,7 @@
 					"-framework",
 					SafariServices,
 				);
+				DEVELOPMENT_TEAM = 6U542ZN2VK;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill.Extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -528,6 +530,7 @@
 					"-framework",
 					WebKit,
 				);
+				DEVELOPMENT_TEAM = 6U542ZN2VK;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -569,6 +572,7 @@
 					"-framework",
 					WebKit,
 				);
+				DEVELOPMENT_TEAM = 6U542ZN2VK;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

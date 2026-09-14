@@ -6,14 +6,15 @@
 # Also drops the old DerivedData registration so Safari does not list the
 # extension twice.
 #
-# Usage: tools/install.sh [Debug|Release]
+# Usage: tools/install.sh [Debug|Release] [--signed]
 set -euo pipefail
 
 CONFIG="${1:-Debug}"
+MODE="${2:-}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="/Applications/INGMaskFill.app"
 
-"$ROOT/tools/build.sh" "$CONFIG"
+"$ROOT/tools/build.sh" "$CONFIG" $MODE
 
 BUILT="$(xcodebuild -project "$ROOT/xcode/INGMaskFill/INGMaskFill.xcodeproj" \
   -scheme INGMaskFill -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
@@ -28,7 +29,12 @@ open "$DEST"
 
 echo
 echo "Installed to $DEST and launched it."
-echo "Now, without restarting Safari:"
-echo "  1. Safari > Settings > Advanced > Show features for web developers"
-echo "  2. Develop > Allow Unsigned Extensions   (resets on every Safari restart)"
-echo "  3. Safari > Settings > Extensions > enable ING Mask Fill"
+if [[ "$MODE" == "--signed" ]]; then
+  echo "Signed with a real team, so Allow Unsigned Extensions is not needed."
+  echo "Enable it in Safari > Settings > Extensions."
+else
+  echo "Ad-hoc signed. Without restarting Safari:"
+  echo "  1. Safari > Settings > Advanced > Show features for web developers"
+  echo "  2. Develop > Allow Unsigned Extensions   (resets on every Safari restart)"
+  echo "  3. Safari > Settings > Extensions > enable ING Mask Fill"
+fi
