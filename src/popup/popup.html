@@ -9,7 +9,22 @@
     <h1>ING Mask Fill</h1>
     <p id="summary" class="subtle">Sprawdzam stronę…</p>
     <p id="positions" class="positions" hidden></p>
-    <button id="fill" type="button" disabled>Wypełnij hasło</button>
+
+    <section id="manager" hidden>
+      <label for="once">Hasło</label>
+      <input type="password" id="once" autocomplete="current-password"
+             spellcheck="false" />
+      <button id="fill-once" type="button" disabled>Wypełnij i zapomnij</button>
+      <p class="hint">
+        Wypełnij z menedżera, wklej lub wpisz ręcznie.
+        Nie zostaje nigdzie zapisane.
+      </p>
+    </section>
+
+    <section id="stored" hidden>
+      <button id="fill-stored" type="button" disabled>Wypełnij z zapisanego hasła</button>
+    </section>
+
     <p id="message" class="message" hidden></p>
     <button id="open-options" class="link" type="button">Ustawienia…</button>
     <script src="popup.js"></script>

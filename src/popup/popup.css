@@ -49,3 +49,26 @@ button.link {
 .message.error {
   color: #d1242f;
 }
+
+section {
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+input[type="password"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px;
+  margin-bottom: 6px;
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: color-mix(in srgb, currentColor 50%, transparent);
+}

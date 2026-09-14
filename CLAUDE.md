@@ -50,6 +50,25 @@ rather than fetching the password and slicing it in JavaScript. **Do not add a
 native action that returns the whole password** — it would collapse the top two
 rows of that table for no gain.
 
+### Two fill paths, on purpose
+
+The popup offers two ways to fill, and **neither is dead code** -- do not
+"simplify" by deleting one:
+
+- **One-shot** (`fillOnce`): the user autofills the password from their own
+  password manager into the popup, which needs Touch ID. The value lives only in
+  a local variable, the field is cleared on click, and nothing is persisted.
+  This is the default and the only path a user who never opts in will ever see.
+- **Stored** (`fillStored`): reads from the Keychain through the native handler.
+  It skips the Touch ID step, at the cost of a second permanent copy of the
+  password. `offerStoredPassword()` keeps its section hidden unless something is
+  actually stored, so storage is strictly opt-in via the options page.
+
+The one-shot path is what makes the extension viable without persisting a
+banking password at all; the stored path is a deliberate convenience the user
+chooses. Keeping it is what forces the native handler, `background.js`, the
+options page and the `nativeMessaging` permission to exist.
+
 Other deliberate constraints, all worth preserving:
 
 - Host permissions are limited to the single path `https://login.ingbank.pl/mojeing/app/*`.

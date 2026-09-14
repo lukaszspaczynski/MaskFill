@@ -14,14 +14,18 @@
   <body>
     <h1>Hasło do Moje ING</h1>
     <p class="subtle">
-      Hasło trafia do pęku kluczy macOS. Rozszerzenie odczytuje z niego wyłącznie
-      znaki z pozycji, o które pyta bank.
+      Zapisanie hasła jest opcjonalne. Bez niego rozszerzenie działa tak samo —
+      podajesz hasło z menedżera przy każdym logowaniu, co wymaga Touch ID.
+    </p>
+    <p class="subtle">
+      Zapisanie pomija to uwierzytelnienie i tworzy drugą kopię hasła w pęku
+      kluczy macOS, obok tej w menedżerze. Kopia nie trafia do iCloud.
+      Rozszerzenie odczytuje z niej wyłącznie znaki z pozycji, o które pyta bank.
     </p>
 
-    <p id="state" class="subtle" role="status"></p>
-
     <label for="password">Pełne hasło</label>
-    <input type="password" id="password" autocomplete="off" spellcheck="false" />
+    <input type="password" id="password" autocomplete="off" spellcheck="false"
+           placeholder="Sprawdzam…" />
 
     <div class="row">
       <button id="save" type="button">Zapisz</button>
