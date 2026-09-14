@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Page Info",
+  "name": "ING Mask Fill",
   "version": "1.0",
-  "description": "Shows structural information about the page you are viewing.",
+  "description": "Fills the masked-password characters ING asks for, from a password held in the macOS Keychain.",
 
   "icons": {
     "48": "images/icon-48.png",
@@ -18,15 +18,16 @@
 
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["shared/settings.js", "content.js"],
-      "run_at": "document_idle"
+      "matches": ["https://login.ingbank.pl/mojeing/app/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
 
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Page Info",
+    "default_title": "ING Mask Fill",
     "default_icon": {
       "16": "images/toolbar-16.png",
       "32": "images/toolbar-32.png"
@@ -37,7 +38,7 @@
     "page": "options/options.html"
   },
 
-  "permissions": ["storage"],
+  "permissions": ["nativeMessaging"],
 
-  "host_permissions": ["*://*/*"]
+  "host_permissions": ["https://login.ingbank.pl/mojeing/app/*"]
 }

@@ -1,6 +1,6 @@
 //
 //  ViewController.swift
-//  PageInfo
+//  INGMaskFill
 //
 //  Created by Lukasz Spaczynski on 14/09/2026.
 //
@@ -9,7 +9,7 @@ import Cocoa
 import SafariServices
 import WebKit
 
-let extensionBundleIdentifier = "com.example.PageInfo.Extension"
+let extensionBundleIdentifier = "com.example.INGMaskFill.Extension"
 
 class ViewController: NSViewController, WKNavigationDelegate, WKScriptMessageHandler {
 

@@ -1,28 +1,38 @@
-// Background service worker. Seeds defaults on first install and keeps the
-// toolbar badge in sync as content scripts report in from each tab.
+// Bridge between the extension's UI and the container app, which is the only
+// component that touches the Keychain.
+//
+// The password is never sent here in full: the popup asks for the characters at
+// specific positions and the native handler returns only those. Nothing in the
+// JavaScript side of the extension, and nothing in the page, ever holds the
+// whole secret.
 
-importScripts("shared/settings.js");
+const NATIVE_APP_ID = "com.example.INGMaskFill";
 
-browser.runtime.onInstalled.addListener(async ({ reason }) => {
-  if (reason === "install") {
-    await browser.storage.sync.set(Settings.DEFAULTS);
+browser.runtime.onMessage.addListener((message) => {
+  switch (message?.type) {
+    case "status":
+      return native({ action: "status" });
+    case "savePassword":
+      return native({ action: "save", password: message.password });
+    case "clearPassword":
+      return native({ action: "delete" });
+    case "charsFor":
+      return native({ action: "chars", positions: message.positions });
+    default:
+      return false;
   }
 });
 
-browser.runtime.onMessage.addListener((message, sender) => {
-  if (message?.type !== "reportPageInfo") return false;
-
-  const tabId = sender.tab?.id;
-  if (tabId !== undefined) updateBadge(tabId, message.stats);
-  return Promise.resolve({ ok: true });
-});
-
-async function updateBadge(tabId, stats) {
-  const text = stats?.links ? String(stats.links) : "";
+async function native(request) {
+  let reply;
   try {
-    // Badge text is per-tab, so Safari discards it when the tab goes away.
-    await browser.action.setBadgeText({ tabId, text });
-  } catch {
-    // Tab closed between the report and this call; nothing to update.
+    reply = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, request);
+  } catch (cause) {
+    // Almost always means the container app is not installed or not signed
+    // consistently with the extension.
+    throw new Error(`Native handler unreachable: ${cause.message}`);
   }
+
+  if (reply?.error) throw new Error(reply.error);
+  return reply;
 }

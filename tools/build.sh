@@ -10,14 +10,14 @@ CONFIG="${1:-Debug}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 xcodebuild \
-  -project "$ROOT/xcode/PageInfo/PageInfo.xcodeproj" \
-  -scheme PageInfo \
+  -project "$ROOT/xcode/INGMaskFill/INGMaskFill.xcodeproj" \
+  -scheme INGMaskFill \
   -configuration "$CONFIG" \
   CODE_SIGN_IDENTITY="-" \
   CODE_SIGN_STYLE=Manual \
   DEVELOPMENT_TEAM="" \
   build
 
-xcodebuild -project "$ROOT/xcode/PageInfo/PageInfo.xcodeproj" -scheme PageInfo \
+xcodebuild -project "$ROOT/xcode/INGMaskFill/INGMaskFill.xcodeproj" -scheme INGMaskFill \
   -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
-  | awk '/ BUILT_PRODUCTS_DIR = /{print "Built: " $3 "/PageInfo.app"}'
+  | awk '/ BUILT_PRODUCTS_DIR = /{print "Built: " $3 "/INGMaskFill.app"}'

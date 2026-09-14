@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>running…</title>
+    <style>
+      body { font: 14px -apple-system, sans-serif; padding: 20px; }
+      #widget { display: flex; flex-wrap: wrap; gap: 6px; max-width: 780px; }
+      ing-input-masked-password-field { display: inline-block; text-align: center; }
+      input { width: 28px; height: 36px; text-align: center; font-size: 15px;
+              border: 2px solid #333; border-radius: 6px; }
+      input:disabled { border-color: #ddd; background: #f4f4f4; }
+      label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      ing-paragraph { display: block; color: #888; font-size: 12px; }
+      li.pass::marker { content: "PASS "; color: #137333; }
+      li.fail::marker { content: "FAIL "; color: #d1242f; }
+      li { font-family: ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Offline stand-in for the ING masked-password widget, built from the real
+      page markup: Lion/Lit custom element hosts with shadow roots, light DOM
+      <input name="password-N"> children (0-based), `disabled` on the boxes the
+      bank is not asking for, and the position printed in a slot="after" node.
+
+      Run headless with tools/test-content.sh, or just open this file.
+    -->
+    <h3>Wpisz wskazane znaki hasła dla loginu – jan.kowalski</h3>
+    <div id="mount"></div>
+    <h4>Wynik testów</h4>
+    <ul id="results"></ul>
+
+    <script>
+      // content.js registers a runtime listener on load; stub just enough of the
+      // extension API that it can run inside a plain page.
+      window.browser = { runtime: { onMessage: { addListener() {} } } };
+
+      const ENABLED = [10, 14, 15, 17, 19]; // positions ING asked for
+      const TOTAL = 32;
+
+      // Stands in for the Lion field: it keeps its own modelValue and only
+      // learns about a change from an `input` event. A bare `el.value = "x"`
+      // must therefore leave this empty -- that is the whole reason content.js
+      // dispatches events instead of assigning.
+      window.model = {};
+
+      class IngMaskedPasswordField extends HTMLElement {
+        connectedCallback() {
+          if (this.shadowRoot) return;
+          // Real shadow root, so the test proves a document-level query still
+          // reaches the slotted inputs.
+          this.attachShadow({ mode: "open" }).innerHTML =
+            '<slot name="label"></slot><slot name="input"></slot><slot name="after"></slot>';
+
+          const input = this.querySelector('input[slot="input"]');
+          input.addEventListener("input", () => {
+            this.modelValue = input.value;
+            window.model[this.getAttribute("name")] = input.value;
+          });
+        }
+      }
+      customElements.define("ing-input-masked-password-field", IngMaskedPasswordField);
+
+      // ING renders the widget inside the app component's shadow tree, so the
+      // fields are NOT reachable from document.querySelectorAll. Reproduce that
+      // nesting -- without it the test cannot catch a non-piercing query.
+      class IngAuthorizationTemplate extends HTMLElement {
+        connectedCallback() {
+          if (this.shadowRoot) return;
+          this.attachShadow({ mode: "open" }).innerHTML = '<div id="widget"></div>';
+        }
+      }
+      customElements.define("ing-authorization-template", IngAuthorizationTemplate);
+
+      const app = document.createElement("ing-authorization-template");
+      document.getElementById("mount").append(app);
+
+      const widget = app.shadowRoot.getElementById("widget");
+      for (let position = 1; position <= TOTAL; position++) {
+        const index = position - 1; // ING names inputs from zero
+        const disabled = ENABLED.includes(position) ? "" : "disabled";
+        widget.insertAdjacentHTML(
+          "beforeend",
+          `<ing-input-masked-password-field name="password-${index}" ${disabled}
+              class="form-field" type="password" inline="">
+             <label slot="label">Wpisz ${position}. znak hasła</label>
+             <input slot="input" class="form-control" type="password"
+                    name="password-${index}" autocomplete="current-password"
+                    aria-disabled="${disabled ? "true" : "false"}" ${disabled}>
+             <ing-paragraph aria-hidden="true" slot="after">${position}</ing-paragraph>
+           </ing-input-masked-password-field>`
+        );
+      }
+    </script>
+
+    <script src="../src/content.js"></script>
+
+    <script>
+      const results = document.getElementById("results");
+      let failures = 0;
+
+      function check(label, condition) {
+        const li = document.createElement("li");
+        li.className = condition ? "pass" : "fail";
+        li.textContent = label;
+        results.append(li);
+        if (!condition) failures += 1;
+      }
+
+      const json = (value) => JSON.stringify(value);
+      const shadow = document.querySelector("ing-authorization-template").shadowRoot;
+      const inputAt = (position) =>
+        shadow.querySelector(`input[name="password-${position - 1}"]`);
+      const allInputs = () => [...shadow.querySelectorAll("input")];
+
+      // 0. The bug this fixture exists to catch: a plain document query finds
+      //    nothing, because the widget lives in the app's shadow tree.
+      check(
+        "document.querySelectorAll cannot see the fields (so the query must pierce)",
+        document.querySelectorAll('input[name^="password-"]').length === 0
+      );
+
+      // 1. Detection through the shadow roots
+      const probed = probe();
+      check("widget detected despite shadow roots", probed.found === true);
+      check(`counts all ${TOTAL} fields`, probed.total === TOTAL);
+      check(
+        `reports enabled positions ${json(ENABLED)}`,
+        json(probed.positions) === json(ENABLED)
+      );
+
+      // 2. Position comes from name="password-N", not DOM order
+      check(
+        "maps 0-based names to 1-based positions",
+        inputAt(10).name === "password-9" && inputAt(19).name === "password-18"
+      );
+
+      // 3. Negative control: the framework ignores a direct assignment
+      inputAt(10).value = "X";
+      check("plain .value assignment does not reach the component", json(window.model) === "{}");
+      inputAt(10).value = "";
+
+      // 4. Fill
+      const chars = { 10: "j", 14: "n", 15: "o", 17: "q", 19: "s" };
+      const filled = fill(chars);
+      check("fills every requested box", filled.filled === ENABLED.length);
+      check(
+        "component observed the filled characters",
+        json(window.model) ===
+          json(Object.fromEntries(ENABLED.map((p) => [`password-${p - 1}`, chars[p]])))
+      );
+      check(
+        "values landed in the right boxes",
+        ENABLED.every((p) => inputAt(p).value === chars[p])
+      );
+
+      // 5. Disabled boxes are never written to
+      check(
+        "leaves disabled boxes empty",
+        allInputs().every((el) => !el.disabled || el.value === "")
+      );
+
+      // 6. A position the bank did not ask for is ignored rather than forced
+      const before = json(window.model);
+      fill({ 3: "z" });
+      check("ignores positions that are not editable", json(window.model) === before);
+
+      // 7. Position survives boxes being absent from the DOM
+      inputAt(1).closest("ing-input-masked-password-field").remove();
+      check(
+        "positions stay correct when a box is missing",
+        json(probe().positions) === json(ENABLED)
+      );
+
+      document.title = failures === 0 ? "ALL TESTS PASSED" : `${failures} TEST FAILURE(S)`;
+    </script>
+  </body>
+</html>

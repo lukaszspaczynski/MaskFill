@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regenerate the placeholder icon set in src/images.
 
-Placeholders only: a blue disc with a white "i". Replace with real artwork
+Placeholders only: an orange disc with a white "i". Replace with real artwork
 before shipping, then re-run nothing -- this script would overwrite it.
 
 Usage: python3 tools/make-icons.py
@@ -14,7 +14,7 @@ OUT = Path(__file__).resolve().parent.parent / "src" / "images"
 ICON_SIZES = [48, 96, 128, 256, 512]
 TOOLBAR_SIZES = [16, 32]
 
-BLUE = (10, 110, 220)
+ORANGE = (255, 98, 0)  # ING brand orange
 WHITE = (255, 255, 255)
 
 
@@ -45,7 +45,7 @@ def render(size):
                 row += bytes((0, 0, 0, 0))
                 continue
 
-            rgb = BLUE
+            rgb = ORANGE
             # Dot of the "i".
             dot = coverage(x, y, c, size * 0.28, size * 0.075)
             # Stem of the "i".

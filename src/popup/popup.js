@@ -1,51 +1,95 @@
-const LABELS = { words: "Words", links: "Links", images: "Images" };
+const summary = document.getElementById("summary");
+const positionsLine = document.getElementById("positions");
+const fillButton = document.getElementById("fill");
+const message = document.getElementById("message");
+
+let target = null; // { tabId, positions }
 
 init();
 
 async function init() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (!tab) return fail("No active tab.");
+  if (!tab) return say(summary, "Brak aktywnej karty.");
 
-  const settings = await Settings.loadSettings();
-
-  let stats;
+  let probe;
   try {
-    stats = await browser.tabs.sendMessage(tab.id, {
-      type: "getPageInfo",
-      settings,
-    });
+    probe = await browser.tabs.sendMessage(tab.id, { type: "probe" });
   } catch {
-    // No content script in this tab: an internal page, or a host the user has
-    // not granted access to yet.
-    return fail("This page can't be inspected.");
+    return say(summary, "To nie jest strona logowania ING.");
   }
 
-  render(stats);
-}
+  if (!probe?.found) {
+    return say(summary, "Nie znalazłem pól maskowanego hasła.");
+  }
+  if (!probe.positions.length) {
+    return say(summary, "Bank nie prosi teraz o żadne znaki.");
+  }
 
-function render(stats) {
-  document.getElementById("page-title").textContent = stats.title || stats.url;
+  let status;
+  try {
+    status = await browser.runtime.sendMessage({ type: "status" });
+  } catch (error) {
+    return fail(error.message);
+  }
 
-  const dl = document.getElementById("stats");
-  for (const [key, label] of Object.entries(LABELS)) {
-    if (!(key in stats)) continue;
-    dl.append(
-      Object.assign(document.createElement("dt"), { textContent: label }),
-      Object.assign(document.createElement("dd"), {
-        textContent: stats[key].toLocaleString(),
-      })
+  if (!status?.stored) {
+    say(summary, "Najpierw zapisz hasło w ustawieniach.");
+    return;
+  }
+  if (status.length < Math.max(...probe.positions)) {
+    say(
+      summary,
+      `Zapisane hasło ma ${status.length} znaków, a bank prosi o pozycję ${Math.max(
+        ...probe.positions
+      )}.`
     );
+    return;
   }
+
+  target = { tabId: tab.id, positions: probe.positions };
+  summary.textContent = `Bank prosi o ${probe.positions.length} z ${probe.total} znaków:`;
+  positionsLine.textContent = probe.positions.join(", ");
+  positionsLine.hidden = false;
+  fillButton.disabled = false;
 }
 
-function fail(message) {
-  document.getElementById("page-title").hidden = true;
-  const el = document.getElementById("error");
-  el.textContent = message;
-  el.hidden = false;
-}
+fillButton.addEventListener("click", async () => {
+  if (!target) return;
+  fillButton.disabled = true;
+
+  try {
+    // Only the requested characters cross into the page; the full password
+    // stays in the Keychain.
+    const { chars } = await browser.runtime.sendMessage({
+      type: "charsFor",
+      positions: target.positions,
+    });
+
+    const result = await browser.tabs.sendMessage(target.tabId, {
+      type: "fill",
+      chars,
+    });
+
+    if (result.error) return fail(result.error);
+    say(message, `Wypełniono ${result.filled} pól. Sprawdź i zaloguj się.`);
+    setTimeout(() => window.close(), 1200);
+  } catch (error) {
+    fail(error.message);
+  }
+});
 
 document.getElementById("open-options").addEventListener("click", () => {
   browser.runtime.openOptionsPage();
   window.close();
 });
+
+function say(el, text) {
+  el.textContent = text;
+  el.hidden = false;
+}
+
+function fail(text) {
+  message.classList.add("error");
+  say(message, text);
+  fillButton.disabled = true;
+}

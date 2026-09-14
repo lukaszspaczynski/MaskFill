@@ -1,27 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="utf-8" />
-    <title>Page Info Settings</title>
+    <title>ING Mask Fill — ustawienia</title>
     <link rel="stylesheet" href="../popup/popup.css" />
     <style>
-      body { min-width: 320px; }
-      label { display: block; margin-bottom: 6px; }
-      textarea { width: 100%; box-sizing: border-box; min-height: 80px; }
+      body { width: 360px; }
+      input[type="password"] { width: 100%; box-sizing: border-box; padding: 5px; }
+      label { display: block; margin: 12px 0 4px; font-weight: 600; }
+      .row { display: flex; gap: 8px; margin-top: 12px; }
     </style>
   </head>
   <body>
-    <h1>Page Info Settings</h1>
+    <h1>Hasło do Moje ING</h1>
+    <p class="subtle">
+      Hasło trafia do pęku kluczy macOS. Rozszerzenie odczytuje z niego wyłącznie
+      znaki z pozycji, o które pyta bank.
+    </p>
 
-    <label><input type="checkbox" id="countWords" /> Count words</label>
-    <label><input type="checkbox" id="countLinks" /> Count links</label>
-    <label><input type="checkbox" id="countImages" /> Count images</label>
+    <p id="state" class="subtle" role="status"></p>
 
-    <p class="subtle">Blocked hosts, one per line. Subdomains are included.</p>
-    <textarea id="blockedHosts" spellcheck="false"></textarea>
+    <label for="password">Pełne hasło</label>
+    <input type="password" id="password" autocomplete="off" spellcheck="false" />
 
-    <p id="status" class="subtle" role="status"></p>
-    <script src="../shared/settings.js"></script>
+    <div class="row">
+      <button id="save" type="button">Zapisz</button>
+      <button id="clear" type="button">Usuń zapisane</button>
+    </div>
+
+    <p id="message" class="message" hidden></p>
     <script src="options.js"></script>
   </body>
 </html>

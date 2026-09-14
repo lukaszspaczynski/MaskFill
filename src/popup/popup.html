@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="utf-8" />
-    <title>Page Info</title>
+    <title>ING Mask Fill</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <h1>Page Info</h1>
-    <p id="page-title" class="subtle">Loading…</p>
-    <dl id="stats"></dl>
-    <p id="error" class="error" hidden></p>
-    <button id="open-options" type="button">Settings…</button>
-    <script src="../shared/settings.js"></script>
+    <h1>ING Mask Fill</h1>
+    <p id="summary" class="subtle">Sprawdzam stronę…</p>
+    <p id="positions" class="positions" hidden></p>
+    <button id="fill" type="button" disabled>Wypełnij hasło</button>
+    <p id="message" class="message" hidden></p>
+    <button id="open-options" class="link" type="button">Ustawienia…</button>
     <script src="popup.js"></script>
   </body>
 </html>
