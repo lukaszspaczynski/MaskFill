@@ -1,20 +1,19 @@
-// Runs on the ING login page. Two jobs: report which password positions the
-// bank is currently asking for, and write characters into those boxes.
+// Runs on pages a rule matches. Two jobs: report which password positions the
+// site is currently asking for, and write characters into those boxes.
 //
-// ING's widget is a set of Lit/Lion custom elements. Each character is an
-// <input name="password-N"> slotted into an <ing-input-masked-password-field>
-// host, and the whole widget is rendered inside the app's shadow tree -- a plain
-// document.querySelectorAll does NOT reach it. The inputs are type="password"
-// with no maxlength; do not try to match on that either.
+// Nothing here is site-specific any more -- the selectors come from a rule the
+// user can edit. The shipped rule targets Moje ING, whose widget is a set of
+// Lit/Lion custom elements rendered inside the app's shadow tree, which is why
+// the query has to pierce shadow roots rather than use document directly.
 
-const FIELD_SELECTOR = 'input[name^="password-"]';
+const DEFAULT_DISABLED_WHEN = "[disabled],[readonly]";
 
 browser.runtime.onMessage.addListener((message) => {
   switch (message?.type) {
     case "probe":
-      return Promise.resolve(probe());
+      return Promise.resolve(probe(message.rule));
     case "fill":
-      return Promise.resolve(fill(message.chars));
+      return Promise.resolve(fill(message.rule, message.chars));
     default:
       return false;
   }
@@ -22,8 +21,8 @@ browser.runtime.onMessage.addListener((message) => {
 
 /**
  * querySelectorAll that descends into open shadow roots. Closed roots are
- * invisible to any script, so if ING ever switches to mode:"closed" this stops
- * working and nothing can fix it from a content script.
+ * invisible to any script, so a site using mode:"closed" cannot be supported
+ * by any rule.
  */
 function deepQueryAll(selector, root = document) {
   const found = [...root.querySelectorAll(selector)];
@@ -34,68 +33,110 @@ function deepQueryAll(selector, root = document) {
 }
 
 /** @returns {{input: HTMLInputElement, position: number}[]} */
-function findFields() {
-  return deepQueryAll(FIELD_SELECTOR)
-    .map((input) => ({ input, position: positionOf(input) }))
-    .filter((field) => field.position !== null);
+function findFields(rule) {
+  let inputs;
+  try {
+    inputs = deepQueryAll(rule.field);
+  } catch {
+    return []; // Invalid selector in a hand-written rule.
+  }
+
+  return inputs
+    .map((input, index) => ({ input, position: positionOf(rule, input, index) }))
+    .filter((field) => Number.isInteger(field.position) && field.position > 0);
 }
 
-// ING numbers the inputs from zero while labelling them from one:
-// name="password-9" is the 10th character. Prefer that over DOM order, which
-// would silently produce wrong positions if any box were not rendered.
-function positionOf(input) {
-  const fromName = /^password-(\d+)$/.exec(input.name);
-  if (fromName) return Number(fromName[1]) + 1;
+/**
+ * Where the character's position comes from. Reading it from an attribute
+ * beats counting DOM order, because a site that omits some boxes would
+ * otherwise shift every position silently.
+ */
+function positionOf(rule, input, index) {
+  const { from = "order", pattern, base = 1 } = rule.position ?? {};
 
-  // Fallbacks in case the naming changes: the digit printed under the box,
-  // then the visually hidden label ("Wpisz 10. znak hasła").
-  const host = input.closest("ing-input-masked-password-field");
+  if (from === "order") return index + 1;
 
-  const printed = host?.querySelector('[slot="after"]')?.textContent.trim();
-  if (printed && /^\d+$/.test(printed)) return Number(printed);
+  const haystack = {
+    name: () => input.name,
+    id: () => input.id,
+    label: () => labelTextFor(input),
+    printed: () => printedTextFor(rule, input),
+  }[from]?.();
 
-  const fromLabel = /(\d+)\s*\./.exec(host?.querySelector("label")?.textContent ?? "");
-  return fromLabel ? Number(fromLabel[1]) : null;
+  if (!haystack) return null;
+
+  const digits = pattern
+    ? new RegExp(pattern).exec(haystack)?.[1]
+    : /(\d+)/.exec(haystack)?.[1];
+
+  if (digits === undefined) return null;
+  return Number(digits) + (base === 0 ? 1 : 0);
 }
 
-function isEditable({ input }) {
-  return !input.disabled && !input.readOnly;
+function labelTextFor(input) {
+  if (input.getAttribute("aria-label")) return input.getAttribute("aria-label");
+  const id = input.id;
+  const root = input.getRootNode();
+  const label = (id && root.querySelector?.(`label[for="${CSS.escape(id)}"]`))
+    ?? input.closest("label")
+    ?? input.parentElement?.querySelector("label");
+  return label?.textContent ?? "";
 }
 
-function probe() {
-  const fields = findFields();
+/** The digit a site renders next to each box, e.g. ING's slot="after" node. */
+function printedTextFor(rule, input) {
+  const selector = rule.position?.in;
+  const host = input.parentElement;
+  if (!host) return "";
+  const node = selector ? host.querySelector(selector) : host;
+  return node?.textContent ?? "";
+}
+
+function isEditable(rule, { input }) {
+  const disabledWhen = rule.disabledWhen ?? DEFAULT_DISABLED_WHEN;
+  try {
+    return !input.matches(disabledWhen);
+  } catch {
+    return !input.disabled && !input.readOnly;
+  }
+}
+
+function probe(rule) {
+  const fields = findFields(rule);
   if (!fields.length) return { found: false };
 
   return {
     found: true,
     total: fields.length,
-    positions: fields.filter(isEditable).map((field) => field.position).sort((a, b) => a - b),
+    positions: fields
+      .filter((field) => isEditable(rule, field))
+      .map((field) => field.position)
+      .sort((a, b) => a - b),
   };
 }
 
 /** @param {Record<string, string>} chars position (1-based, as string) -> character */
-function fill(chars) {
-  const fields = findFields();
-  if (!fields.length) return { filled: 0, error: "Widget not found." };
+function fill(rule, chars) {
+  const fields = findFields(rule);
+  if (!fields.length) return { filled: 0, error: "Nie znalazłem pól." };
 
   const byPosition = new Map(fields.map((field) => [field.position, field]));
 
   let filled = 0;
   for (const [position, char] of Object.entries(chars)) {
     const field = byPosition.get(Number(position));
-    if (!field || !isEditable(field)) continue;
+    if (!field || !isEditable(rule, field)) continue;
     setValue(field.input, char);
     filled += 1;
   }
 
-  // Leave focus on the last editable box so the user can review and submit.
-  fields.filter(isEditable).at(-1)?.input.focus();
+  fields.filter((field) => isEditable(rule, field)).at(-1)?.input.focus();
   return { filled };
 }
 
-// The Lion field keeps its own copy of the value and only updates it from
+// The page's framework keeps its own copy of the value and only updates it from
 // events, so a plain `input.value = char` is silently ignored. Assign through
-// the native setter, then replay the events the component listens for.
+// the native setter, then replay the events it listens for.
 function setValue(input, char) {
   const setter = Object.getOwnPropertyDescriptor(
     HTMLInputElement.prototype,

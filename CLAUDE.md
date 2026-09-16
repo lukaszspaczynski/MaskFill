@@ -4,9 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Safari Web Extension that fills the masked-password characters ING's Moje ING
-login asks for (e.g. "give me characters 10, 14, 15, 17, 19 of 32"). Password
-managers cannot autofill that widget, which is the entire reason this exists.
+A Safari Web Extension that fills the characters a masked-password login asks
+for (e.g. "give me characters 10, 14, 15, 17, 19 of 32"). Password managers
+cannot autofill that kind of widget, which is the entire reason this exists.
+
+The **branding is deliberately bank-neutral** -- no bank name, no bank colours --
+because the project is headed for distribution and using a bank's marks
+commercially is a legal exposure. The **implementation is still ING-only**: the
+host permission, the selectors and the fixture all target Moje ING. Those are
+different things; do not "fix" the comments in `content.js` that name ING, they
+describe what the selectors actually match.
 
 ## Commands
 
@@ -19,69 +26,52 @@ python3 tools/make-icons.py      # regenerate the placeholder icons
 node --check src/content.js      # syntax check; there is no JS toolchain
 ```
 
-`tools/test-content.sh` drives `tools/mock-ing.html`, an offline stand-in for the
-ING widget that loads the real `src/content.js`. Use it instead of the bank's
-site when changing detection or filling. Opening the fixture in a browser shows
-the same results.
+`tools/test-content.sh` runs every `tools/mock-*.html` fixture through headless
+Chrome. Each loads the real source rather than a copy, so the assertions cannot
+drift from what ships:
 
-There are no Swift tests. The Keychain code was verified once out-of-band by
-compiling `SafariWebExtensionHandler.swift` standalone against a throwaway
-service name; if you change it, do that again rather than testing against the
-real stored password.
+- `mock-widget.html` replicates ING's Lion/Lit widget -- shadow roots, slotted
+  inputs, disabled boxes -- and drives `src/content.js`. Use it instead of the
+  bank's site when changing detection or filling.
+- `mock-options.html` fetches `src/options/options.html`, mounts its markup,
+  stubs the extension APIs and runs the real `src/options/options.js` against
+  it. This is why the runner passes Chrome `--allow-file-access-from-files`.
 
-The whole path -- shadow-piercing detection, native messaging, Keychain
-read/write, and filling -- has been confirmed working against the live ING site
-with an ad-hoc signed build. A real development team is therefore not required
-for Keychain access from the sandboxed appex, contrary to what the signing
-warnings suggest.
+Opening either file in a browser shows the same results.
+
+There is no Swift to test -- the native handler is a stub.
+
+Detection and filling have been confirmed working against the live ING site.
 
 ## Security model
 
-Three zones, and the password crosses as few boundaries as possible:
+**Nothing is persisted.** The popup takes the password from the user's password
+manager (macOS autofill, which means Touch ID), derives the characters for the
+positions the site asked for, and lets it go when the popup closes. It is held
+in one local variable and the field is cleared on click.
 
-| Zone                          | What it may hold                                  |
-| ----------------------------- | ------------------------------------------------- |
-| Native handler (`.appex`)     | the full password, read from the Keychain         |
-| Extension JS (background/popup) | only the characters for the positions requested |
-| Page (`content.js`)           | only those same characters, written into the boxes |
+This is the whole point of the design, and it is what removed the extension's
+original tension: storing a full banking password undercuts the reason masked
+passwords exist, and duplicated what the password manager already held. There is
+no Keychain item, no `storage` of secrets, no native messaging. **Do not add a
+"remember my password" convenience** -- an earlier version had one and it was
+deliberately deleted.
 
-This is why `background.js` asks the native side for `{action:"chars", positions}`
-rather than fetching the password and slicing it in JavaScript. **Do not add a
-native action that returns the whole password** — it would collapse the top two
-rows of that table for no gain.
+`SafariWebExtensionHandler.swift` is a stub. Safari requires the class to exist
+and requires the container app to ship the extension at all, but no message
+needs native code. The container app is otherwise an empty shell.
 
-### Two fill paths, on purpose
-
-The popup offers two ways to fill, and **neither is dead code** -- do not
-"simplify" by deleting one:
-
-- **One-shot** (`fillOnce`): the user autofills the password from their own
-  password manager into the popup, which needs Touch ID. The value lives only in
-  a local variable, the field is cleared on click, and nothing is persisted.
-  This is the default and the only path a user who never opts in will ever see.
-- **Stored** (`fillStored`): reads from the Keychain through the native handler.
-  It skips the Touch ID step, at the cost of a second permanent copy of the
-  password. `offerStoredPassword()` keeps its section hidden unless something is
-  actually stored, so storage is strictly opt-in via the options page.
-
-The one-shot path is what makes the extension viable without persisting a
-banking password at all; the stored path is a deliberate convenience the user
-chooses. Keeping it is what forces the native handler, `background.js`, the
-options page and the `nativeMessaging` permission to exist.
+One consequence worth knowing: because nothing native is required, everything
+except the Safari app wrapper is portable to Chrome and Firefox as-is.
 
 Other deliberate constraints, all worth preserving:
 
-- Host permissions are limited to the single path `https://login.ingbank.pl/mojeing/app/*`.
-  Never widen this; the extension has access to a banking password. Match
-  patterns cannot express the `#login-oauth2` fragment, and the app is a SPA that
-  changes route without reloading, so the content script deliberately does not
-  check `location.hash` -- `probe()` returning `found: false` when the widget is
-  absent is the reliable signal.
-- Filling requires an explicit click in the popup. Nothing fills automatically on
-  page load.
-- The Keychain item is `kSecAttrSynchronizable: false`, so the password stays on
-  this Mac and does not go to iCloud.
-- The native handler logs failures but never the secret. Keep it that way.
+- Static `host_permissions` name one path. Broad access exists only as an
+  optional permission the user grants per site.
+- Filling requires an explicit click. Nothing fills on page load.
+- Rules are user-authored only. **Never add "import rules from a URL"** -- a
+  rule is a selector plus a regex applied to a login page, so a hostile rule is
+  a credential-theft primitive.
 
 ## Architecture
 
@@ -90,9 +80,9 @@ Two layers built together but developed differently:
 - **`src/`** — the Manifest V3 extension. Plain HTML/CSS/JS, no build step, no
   ES modules (Safari has no module service workers, so `background.js` uses
   `importScripts` if it ever needs shared code).
-- **`xcode/INGMaskFill/`** — the macOS container app. Safari can only install an
-  extension that ships inside an app. `SafariWebExtensionHandler.swift` is the
-  real work: Keychain storage plus the position→character lookup.
+- **`xcode/MaskFill/`** — the macOS container app. Safari can only install an
+  extension that ships inside an app; beyond that the app does nothing and
+  `SafariWebExtensionHandler.swift` is a stub.
 
 The Xcode project references `src/` through **relative paths** (`../../../src/...`),
 not copies — edit `src/` and rebuild; never re-run the converter just to pick up
@@ -114,50 +104,69 @@ the top level of `src/` must be added to the extension target's Resources phase.
 
 Positions are 1-based to match ING's own labels.
 
-### Widget detection
+### Rules, not hardcoded selectors
 
-Verified against the real page markup, not guessed. ING's widget is built from
-Lit/Lion custom elements:
+Detection is driven by a user-editable rule list in `browser.storage.local`.
+`content.js` contains no site-specific knowledge; it is handed a rule and applies
+it. `BUILTIN_RULES` in `background.js` seeds one entry for Moje ING, which is
+also the worked example users copy.
 
-```html
-<ing-input-masked-password-field name="password-9" ...>   <!-- 10th character -->
-  <label slot="label">Wpisz 10. znak hasła</label>
-  <input slot="input" type="password" name="password-9">  <!-- light DOM -->
-  <ing-paragraph slot="after">10</ing-paragraph>
-</ing-input-masked-password-field>
+```json
+{
+  "name": "Moje ING",
+  "matches": ["https://login.ingbank.pl/mojeing/app/*"],
+  "field": "input[name^=\"password-\"]",
+  "position": { "from": "name", "pattern": "password-(\\d+)", "base": 0 },
+  "disabledWhen": "[disabled],[readonly]"
+}
 ```
 
-Three facts that drive `content.js`:
+Rules are edited as cards in the options page: a rule owns a list of addresses,
+and `[matches] -> rule` is always one tuple that can be added or removed whole.
+The JSON view underneath is the same model, for copying rules between machines.
+`render()` rebuilds the list only when rules or addresses are added or removed;
+typing binds straight to the model so a field never loses focus mid-edit.
 
-- **Inputs are `type="password"` with no `maxlength`.** An earlier version
-  selected `input[maxlength="1"]` and matched nothing at all. The selector is
-  `input[name^="password-"]`.
-- **`name` is 0-based, the UI is 1-based.** `password-9` is the 10th character.
-  Position comes from the name, never from DOM order, so a box missing from the
-  page cannot shift every other position. `positionOf()` falls back to the digit
-  in `slot="after"`, then to the label text.
+`position.from` is one of `name`, `id`, `label`, `printed`, `order`. Reading the
+position from an attribute beats counting DOM order: a site that omits some
+boxes would otherwise shift every position silently. `base: 0` handles sites
+that number from zero -- ING's `password-9` is the 10th character.
+
+Two facts about ING's markup that the shipped rule encodes, both found only
+against the live site:
+
+- The inputs are `type="password"` with **no `maxlength`**. An early version
+  selected `input[maxlength="1"]` and matched nothing at all.
 - **The widget lives inside the app's shadow tree**, so a plain
-  `document.querySelectorAll` finds nothing at all -- this was the second bug
-  found on the live site. `findFields()` uses `deepQueryAll()`, which recurses
-  into open shadow roots. The fixture nests its widget the same way and asserts
-  that a non-piercing query returns zero, so the regression cannot come back
-  unnoticed. Closed shadow roots would be unreachable by any script; if ING ever
-  switches to `mode: "closed"` this approach dies and there is no workaround
-  from a content script.
+  `document.querySelectorAll` finds nothing. `deepQueryAll()` recurses into open
+  shadow roots. The fixture nests its widget the same way and asserts a
+  non-piercing query returns zero, so the regression cannot come back unnoticed.
+  Closed shadow roots are unreachable by any script and no rule can fix that.
 
-Boxes the bank is not asking for carry `disabled` on both the host and the inner
-input, so `!input.disabled && !input.readOnly` is the fillable test.
+**Writing a value requires dispatching events.** The page framework keeps its own
+copy and syncs it from `input` events, so `input.value = char` is silently
+ignored. `setValue()` uses the native `HTMLInputElement.prototype.value` setter
+and then fires `input` and `change`. The fixture has a negative-control
+assertion for exactly this.
 
-**Writing a value requires dispatching events.** The Lion field keeps its own
-`modelValue` and syncs it from `input` events, so `input.value = char` is
-silently ignored. `setValue()` goes through the native
-`HTMLInputElement.prototype.value` setter and then fires `input` and `change`.
-`tools/mock-ing.html` has a negative-control assertion for exactly this; if
-filling ever stops working, that is the first thing to suspect and the fixture
-is where to reproduce it.
+`tools/inspect-widget.js` dumps a live widget's structure from the Web Inspector
+console (never values) when writing a rule for a new site.
 
-`tools/inspect-widget.js` dumps the live widget's structure from the Web
-Inspector console (never values) if the markup changes again.
+### Permissions for user-added sites
+
+The manifest can only name hosts known at build time, so there is a static
+`content_scripts` entry for ING plus `optional_host_permissions: ["*://*/*"]`.
+When rules are saved, the options page calls `permissions.request()` -- it has to
+be there, because that API needs a user gesture -- and `syncContentScripts()` in
+the background registers scripts only for rules whose hosts are actually
+granted. An unapproved rule simply gets no content script.
+
+`syncContentScripts()` swallows its errors on purpose: Safari has been
+inconsistent about `scripting.registerContentScripts`, and the built-in ING rule
+keeps working from the manifest entry regardless.
+
+Never widen the static `host_permissions`. Broad access is available only as an
+optional permission the user grants per site.
 
 ## Gotchas
 
@@ -177,10 +186,6 @@ id from `--app-name` but uses the literal `--bundle-identifier` for the extensio
 target, so a case mismatch fails `ValidateEmbeddedBinary` with "embedded binary's
 bundle identifier is not prefixed with the parent app's".
 
-**Native messaging needs both halves installed.** "Native handler unreachable"
-in the UI means the container app is missing or signed inconsistently with the
-extension, not that the Keychain is empty.
-
 ## Regenerating the Xcode project
 
 Only needed when changing platform, app name, or identifiers. It discards
@@ -190,8 +195,8 @@ aside first.
 ```sh
 rm -rf xcode
 xcrun safari-web-extension-converter src \
-  --project-location xcode --app-name INGMaskFill \
-  --bundle-identifier com.example.INGMaskFill \
+  --project-location xcode --app-name MaskFill \
+  --bundle-identifier com.example.MaskFill \
   --macos-only --swift --no-open --no-prompt --force
 ```
 
@@ -206,7 +211,7 @@ conversion.
 
 ## Placeholders to replace before this is more than a personal tool
 
-- Bundle identifier is `com.example.INGMaskFill`, and `NATIVE_APP_ID` in
+- Bundle identifier is `com.example.MaskFill`, and `NATIVE_APP_ID` in
   `background.js` must be kept in sync with it.
 - `src/images/*` are generated placeholders (an orange disc with an "i").
   Replacing them means deleting `tools/make-icons.py`, which would otherwise

@@ -2,15 +2,15 @@
 <html lang="pl">
   <head>
     <meta charset="utf-8" />
-    <title>ING Mask Fill</title>
+    <title>Mask Fill</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <h1>ING Mask Fill</h1>
+    <h1>Mask Fill</h1>
     <p id="summary" class="subtle">Sprawdzam stronę…</p>
     <p id="positions" class="positions" hidden></p>
 
-    <section id="manager" hidden>
+    <section id="entry" hidden>
       <label for="once">Hasło</label>
       <input type="password" id="once" autocomplete="current-password"
              spellcheck="false" />
@@ -19,10 +19,6 @@
         Wypełnij z menedżera, wklej lub wpisz ręcznie.
         Nie zostaje nigdzie zapisane.
       </p>
-    </section>
-
-    <section id="stored" hidden>
-      <button id="fill-stored" type="button" disabled>Wypełnij z zapisanego hasła</button>
     </section>
 
     <p id="message" class="message" hidden></p>

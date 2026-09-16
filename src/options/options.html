@@ -2,37 +2,90 @@
 <html lang="pl">
   <head>
     <meta charset="utf-8" />
-    <title>ING Mask Fill — ustawienia</title>
+    <title>Mask Fill — ustawienia</title>
     <link rel="stylesheet" href="../popup/popup.css" />
     <style>
-      body { width: 360px; }
-      input[type="password"] { width: 100%; box-sizing: border-box; padding: 5px; }
-      label { display: block; margin: 12px 0 4px; font-weight: 600; }
-      .row { display: flex; gap: 8px; margin-top: 12px; }
+      body { width: 680px; }
+      h2 { font-size: 14px; margin: 26px 0 6px; }
+
+      .rule {
+        border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+      }
+      .rule-head { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+      .rule-head input { flex: 1; font-weight: 600; }
+
+      .field { margin-bottom: 8px; }
+      .field > span {
+        display: block;
+        font-size: 11px;
+        margin-bottom: 3px;
+        color: color-mix(in srgb, currentColor 55%, transparent);
+      }
+
+      .matches div { display: flex; gap: 6px; margin-bottom: 4px; }
+      .matches input { flex: 1; }
+
+      .grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 8px; }
+
+      input[type="text"], select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 4px 6px;
+        font: 12px/1.4 ui-monospace, SFMono-Regular, monospace;
+      }
+      .rule-head input, select { font-family: inherit; }
+
+      button.small {
+        width: auto;
+        flex: 0 0 auto;
+        padding: 3px 9px;
+        font-size: 12px;
+      }
+      .row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+      .row button { width: auto; }
+      .row .spacer { flex: 1; }
+
+      details { margin-top: 14px; }
+      summary { cursor: pointer; font-size: 12px; opacity: 0.75; }
+      details textarea {
+        width: 100%; box-sizing: border-box; min-height: 200px; margin-top: 8px; padding: 6px;
+        font: 11px/1.5 ui-monospace, SFMono-Regular, monospace;
+      }
+      details p { font-size: 11px; }
     </style>
   </head>
   <body>
-    <h1>Hasło do Moje ING</h1>
+    <h2>Reguły</h2>
     <p class="subtle">
-      Zapisanie hasła jest opcjonalne. Bez niego rozszerzenie działa tak samo —
-      podajesz hasło z menedżera przy każdym logowaniu, co wymaga Touch ID.
-    </p>
-    <p class="subtle">
-      Zapisanie pomija to uwierzytelnienie i tworzy drugą kopię hasła w pęku
-      kluczy macOS, obok tej w menedżerze. Kopia nie trafia do iCloud.
-      Rozszerzenie odczytuje z niej wyłącznie znaki z pozycji, o które pyta bank.
+      Każda reguła obejmuje dowolnie wiele adresów. Dla otwartej strony wygrywa
+      pierwsza pasująca reguła od góry.
     </p>
 
-    <label for="password">Pełne hasło</label>
-    <input type="password" id="password" autocomplete="off" spellcheck="false"
-           placeholder="Sprawdzam…" />
+    <div id="rules"></div>
 
     <div class="row">
-      <button id="save" type="button">Zapisz</button>
-      <button id="clear" type="button">Usuń zapisane</button>
+      <button id="add-rule" class="small" type="button">+ Dodaj regułę</button>
+      <span class="spacer"></span>
+      <button id="reset-rules" class="small" type="button">Przywróć domyślne</button>
+      <button id="save-rules" class="small" type="button">Zapisz reguły</button>
     </div>
+    <p id="rules-message" class="message" hidden></p>
 
-    <p id="message" class="message" hidden></p>
+    <details>
+      <summary>JSON — podgląd, kopiowanie, wklejanie</summary>
+      <p class="subtle">
+        Przydatne do przeniesienia reguł na inny komputer. Wklejenie zastępuje
+        wszystkie reguły powyżej.
+      </p>
+      <textarea id="json" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="apply-json" class="small" type="button">Wczytaj z JSON-a</button>
+      </div>
+    </details>
+
     <script src="options.js"></script>
   </body>
 </html>

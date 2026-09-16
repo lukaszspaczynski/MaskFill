@@ -121,8 +121,16 @@
         document.querySelectorAll('input[name^="password-"]').length === 0
       );
 
+      // The rule the extension ships with, exactly as stored.
+      const ingRule = {
+        name: "Moje ING",
+        matches: ["https://login.ingbank.pl/mojeing/app/*"],
+        field: 'input[name^="password-"]',
+        position: { from: "name", pattern: "password-(\\d+)", base: 0 },
+      };
+
       // 1. Detection through the shadow roots
-      const probed = probe();
+      const probed = probe(ingRule);
       check("widget detected despite shadow roots", probed.found === true);
       check(`counts all ${TOTAL} fields`, probed.total === TOTAL);
       check(
@@ -143,7 +151,7 @@
 
       // 4. Fill
       const chars = { 10: "j", 14: "n", 15: "o", 17: "q", 19: "s" };
-      const filled = fill(chars);
+      const filled = fill(ingRule, chars);
       check("fills every requested box", filled.filled === ENABLED.length);
       check(
         "component observed the filled characters",
@@ -163,14 +171,36 @@
 
       // 6. A position the bank did not ask for is ignored rather than forced
       const before = json(window.model);
-      fill({ 3: "z" });
+      fill(ingRule, { 3: "z" });
       check("ignores positions that are not editable", json(window.model) === before);
 
       // 7. Position survives boxes being absent from the DOM
       inputAt(1).closest("ing-input-masked-password-field").remove();
       check(
         "positions stay correct when a box is missing",
-        json(probe().positions) === json(ENABLED)
+        json(probe(ingRule).positions) === json(ENABLED)
+      );
+
+      // 8. A completely different rule shape must work too, otherwise the
+      //    engine is still ING-specific in disguise.
+      const alt = document.createElement("div");
+      alt.id = "alt";
+      document.body.append(alt);
+      [4, 7].forEach((position) => {
+        alt.insertAdjacentHTML("beforeend",
+          `<span><input class="pw" type="password" aria-label="Znak ${position}"></span>`);
+      });
+      [1, 2, 3, 5, 6].forEach((position) => {
+        alt.insertAdjacentHTML("beforeend",
+          `<span><input class="pw" type="password" readonly aria-label="Znak ${position}"></span>`);
+      });
+
+      const altRule = { name: "Alt", matches: ["https://alt.example/*"], field: "#alt input.pw",
+                        position: { from: "label" } };
+      const altProbe = probe(altRule);
+      check(
+        "a label-based, 1-based rule works without any ING conventions",
+        altProbe.found && altProbe.total === 7 && json(altProbe.positions) === json([4, 7])
       );
 
       document.title = failures === 0 ? "ALL TESTS PASSED" : `${failures} TEST FAILURE(S)`;

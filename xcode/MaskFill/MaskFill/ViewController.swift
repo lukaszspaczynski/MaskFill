@@ -1,6 +1,6 @@
 //
 //  ViewController.swift
-//  INGMaskFill
+//  MaskFill
 //
 //  Created by Lukasz Spaczynski on 14/09/2026.
 //
@@ -9,7 +9,7 @@ import Cocoa
 import SafariServices
 import WebKit
 
-let extensionBundleIdentifier = "com.example.INGMaskFill.Extension"
+let extensionBundleIdentifier = "com.example.MaskFill.Extension"
 
 class ViewController: NSViewController, WKNavigationDelegate, WKScriptMessageHandler {
 

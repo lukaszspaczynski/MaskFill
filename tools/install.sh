@@ -12,16 +12,16 @@ set -euo pipefail
 CONFIG="${1:-Debug}"
 MODE="${2:-}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEST="/Applications/INGMaskFill.app"
+DEST="/Applications/MaskFill.app"
 
 "$ROOT/tools/build.sh" "$CONFIG" $MODE
 
-BUILT="$(xcodebuild -project "$ROOT/xcode/INGMaskFill/INGMaskFill.xcodeproj" \
-  -scheme INGMaskFill -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
-  | awk '/ BUILT_PRODUCTS_DIR = /{print $3}')/INGMaskFill.app"
+BUILT="$(xcodebuild -project "$ROOT/xcode/MaskFill/MaskFill.xcodeproj" \
+  -scheme MaskFill -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
+  | awk '/ BUILT_PRODUCTS_DIR = /{print $3}')/MaskFill.app"
 
 # Unregister the DerivedData copy before replacing it.
-pluginkit -r "$BUILT/Contents/PlugIns/INGMaskFill Extension.appex" 2>/dev/null || true
+pluginkit -r "$BUILT/Contents/PlugIns/MaskFill Extension.appex" 2>/dev/null || true
 
 rm -rf "$DEST"
 cp -R "$BUILT" "$DEST"
@@ -36,5 +36,5 @@ else
   echo "Ad-hoc signed. Without restarting Safari:"
   echo "  1. Safari > Settings > Advanced > Show features for web developers"
   echo "  2. Develop > Allow Unsigned Extensions   (resets on every Safari restart)"
-  echo "  3. Safari > Settings > Extensions > enable ING Mask Fill"
+  echo "  3. Safari > Settings > Extensions > enable Mask Fill"
 fi

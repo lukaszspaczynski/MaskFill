@@ -15,7 +15,7 @@
 		50646B563058853000885438 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50646B553058853000885438 /* ViewController.swift */; };
 		50646B593058853000885438 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 50646B573058853000885438 /* Main.storyboard */; };
 		50646B5B3058853200885438 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 50646B5A3058853200885438 /* Assets.xcassets */; };
-		50646B623058853200885438 /* INGMaskFill Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 50646B613058853200885438 /* INGMaskFill Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		50646B623058853200885438 /* MaskFill Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 50646B613058853200885438 /* MaskFill Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		50646B673058853200885438 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50646B663058853200885438 /* SafariWebExtensionHandler.swift */; };
 		50646B793058853200885438 /* options in Resources */ = {isa = PBXBuildFile; fileRef = 50646B733058853200885438 /* options */; };
 		50646B7A3058853200885438 /* popup in Resources */ = {isa = PBXBuildFile; fileRef = 50646B743058853200885438 /* popup */; };
@@ -31,7 +31,7 @@
 			containerPortal = 50646B3E3058853000885438 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 50646B603058853200885438;
-			remoteInfo = "INGMaskFill Extension";
+			remoteInfo = "MaskFill Extension";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -42,7 +42,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				50646B623058853200885438 /* INGMaskFill Extension.appex in Embed Foundation Extensions */,
+				50646B623058853200885438 /* MaskFill Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -50,7 +50,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		50646B463058853000885438 /* INGMaskFill.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = INGMaskFill.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		50646B463058853000885438 /* MaskFill.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MaskFill.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50646B493058853000885438 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		50646B4D3058853000885438 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
 		50646B4F3058853000885438 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
@@ -60,7 +60,7 @@
 		50646B583058853000885438 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		50646B5A3058853200885438 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		50646B5C3058853200885438 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		50646B613058853200885438 /* INGMaskFill Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "INGMaskFill Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		50646B613058853200885438 /* MaskFill Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "MaskFill Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		50646B663058853200885438 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
 		50646B683058853200885438 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50646B733058853200885438 /* options */ = {isa = PBXFileReference; lastKnownFileType = folder; name = options; path = ../../../src/options; sourceTree = "<group>"; };
@@ -92,8 +92,8 @@
 		50646B3D3058853000885438 = {
 			isa = PBXGroup;
 			children = (
-				50646B483058853000885438 /* INGMaskFill */,
-				50646B653058853200885438 /* INGMaskFill Extension */,
+				50646B483058853000885438 /* MaskFill */,
+				50646B653058853200885438 /* MaskFill Extension */,
 				50646B473058853000885438 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,13 +101,13 @@
 		50646B473058853000885438 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				50646B463058853000885438 /* INGMaskFill.app */,
-				50646B613058853200885438 /* INGMaskFill Extension.appex */,
+				50646B463058853000885438 /* MaskFill.app */,
+				50646B613058853200885438 /* MaskFill Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		50646B483058853000885438 /* INGMaskFill */ = {
+		50646B483058853000885438 /* MaskFill */ = {
 			isa = PBXGroup;
 			children = (
 				50646B493058853000885438 /* AppDelegate.swift */,
@@ -117,7 +117,7 @@
 				50646B5C3058853200885438 /* Info.plist */,
 				50646B4B3058853000885438 /* Resources */,
 			);
-			path = INGMaskFill;
+			path = MaskFill;
 			sourceTree = "<group>";
 		};
 		50646B4B3058853000885438 /* Resources */ = {
@@ -131,14 +131,14 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		50646B653058853200885438 /* INGMaskFill Extension */ = {
+		50646B653058853200885438 /* MaskFill Extension */ = {
 			isa = PBXGroup;
 			children = (
 				50646B723058853200885438 /* Resources */,
 				50646B663058853200885438 /* SafariWebExtensionHandler.swift */,
 				50646B683058853200885438 /* Info.plist */,
 			);
-			path = "INGMaskFill Extension";
+			path = "MaskFill Extension";
 			sourceTree = "<group>";
 		};
 		50646B723058853200885438 /* Resources */ = {
@@ -152,15 +152,15 @@
 				50646B783058853200885438 /* content.js */,
 			);
 			name = Resources;
-			path = "INGMaskFill Extension";
+			path = "MaskFill Extension";
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		50646B453058853000885438 /* INGMaskFill */ = {
+		50646B453058853000885438 /* MaskFill */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 50646B6F3058853200885438 /* Build configuration list for PBXNativeTarget "INGMaskFill" */;
+			buildConfigurationList = 50646B6F3058853200885438 /* Build configuration list for PBXNativeTarget "MaskFill" */;
 			buildPhases = (
 				50646B423058853000885438 /* Sources */,
 				50646B433058853000885438 /* Frameworks */,
@@ -172,16 +172,16 @@
 			dependencies = (
 				50646B643058853200885438 /* PBXTargetDependency */,
 			);
-			name = INGMaskFill;
+			name = MaskFill;
 			packageProductDependencies = (
 			);
-			productName = INGMaskFill;
-			productReference = 50646B463058853000885438 /* INGMaskFill.app */;
+			productName = MaskFill;
+			productReference = 50646B463058853000885438 /* MaskFill.app */;
 			productType = "com.apple.product-type.application";
 		};
-		50646B603058853200885438 /* INGMaskFill Extension */ = {
+		50646B603058853200885438 /* MaskFill Extension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 50646B6B3058853200885438 /* Build configuration list for PBXNativeTarget "INGMaskFill Extension" */;
+			buildConfigurationList = 50646B6B3058853200885438 /* Build configuration list for PBXNativeTarget "MaskFill Extension" */;
 			buildPhases = (
 				50646B5D3058853200885438 /* Sources */,
 				50646B5E3058853200885438 /* Frameworks */,
@@ -191,11 +191,11 @@
 			);
 			dependencies = (
 			);
-			name = "INGMaskFill Extension";
+			name = "MaskFill Extension";
 			packageProductDependencies = (
 			);
-			productName = "INGMaskFill Extension";
-			productReference = 50646B613058853200885438 /* INGMaskFill Extension.appex */;
+			productName = "MaskFill Extension";
+			productReference = 50646B613058853200885438 /* MaskFill Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -216,7 +216,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 50646B413058853000885438 /* Build configuration list for PBXProject "INGMaskFill" */;
+			buildConfigurationList = 50646B413058853000885438 /* Build configuration list for PBXProject "MaskFill" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -230,8 +230,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				50646B453058853000885438 /* INGMaskFill */,
-				50646B603058853200885438 /* INGMaskFill Extension */,
+				50646B453058853000885438 /* MaskFill */,
+				50646B603058853200885438 /* MaskFill Extension */,
 			);
 		};
 /* End PBXProject section */
@@ -288,7 +288,7 @@
 /* Begin PBXTargetDependency section */
 		50646B643058853200885438 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 50646B603058853200885438 /* INGMaskFill Extension */;
+			target = 50646B603058853200885438 /* MaskFill Extension */;
 			targetProxy = 50646B633058853200885438 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -440,8 +440,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "INGMaskFill Extension/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "INGMaskFill Extension";
+				INFOPLIST_FILE = "MaskFill Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "MaskFill Extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -455,7 +455,7 @@
 					SafariServices,
 				);
 				DEVELOPMENT_TEAM = 6U542ZN2VK;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill.Extension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MaskFill.Extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -475,8 +475,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "INGMaskFill Extension/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "INGMaskFill Extension";
+				INFOPLIST_FILE = "MaskFill Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "MaskFill Extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -490,7 +490,7 @@
 					SafariServices,
 				);
 				DEVELOPMENT_TEAM = 6U542ZN2VK;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill.Extension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MaskFill.Extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -514,8 +514,8 @@
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = INGMaskFill/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = INGMaskFill;
+				INFOPLIST_FILE = MaskFill/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MaskFill;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -531,7 +531,7 @@
 					WebKit,
 				);
 				DEVELOPMENT_TEAM = 6U542ZN2VK;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MaskFill;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -556,8 +556,8 @@
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = INGMaskFill/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = INGMaskFill;
+				INFOPLIST_FILE = MaskFill/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MaskFill;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -573,7 +573,7 @@
 					WebKit,
 				);
 				DEVELOPMENT_TEAM = 6U542ZN2VK;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.INGMaskFill;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MaskFill;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -588,7 +588,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		50646B413058853000885438 /* Build configuration list for PBXProject "INGMaskFill" */ = {
+		50646B413058853000885438 /* Build configuration list for PBXProject "MaskFill" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				50646B693058853200885438 /* Debug */,
@@ -597,7 +597,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		50646B6B3058853200885438 /* Build configuration list for PBXNativeTarget "INGMaskFill Extension" */ = {
+		50646B6B3058853200885438 /* Build configuration list for PBXNativeTarget "MaskFill Extension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				50646B6C3058853200885438 /* Debug */,
@@ -606,7 +606,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		50646B6F3058853200885438 /* Build configuration list for PBXNativeTarget "INGMaskFill" */ = {
+		50646B6F3058853200885438 /* Build configuration list for PBXNativeTarget "MaskFill" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				50646B703058853200885438 /* Debug */,

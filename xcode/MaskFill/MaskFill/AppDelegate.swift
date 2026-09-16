@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  INGMaskFill
+//  MaskFill
 //
 //  Created by Lukasz Spaczynski on 14/09/2026.
 //

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ING Mask Fill",
+  "name": "Mask Fill",
   "version": "1.0",
-  "description": "Wypełnia znaki maskowanego hasła, o które pyta ING — z menedżera haseł lub z hasła zapisanego w pęku kluczy.",
+  "description": "Wypełnia wskazane znaki maskowanego hasła — z menedżera haseł lub z hasła zapisanego w pęku kluczy.",
 
   "icons": {
     "48": "images/icon-48.png",
@@ -27,7 +27,7 @@
 
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "ING Mask Fill",
+    "default_title": "Mask Fill",
     "default_icon": {
       "16": "images/toolbar-16.png",
       "32": "images/toolbar-32.png"
@@ -38,7 +38,9 @@
     "page": "options/options.html"
   },
 
-  "permissions": ["nativeMessaging"],
+  "permissions": ["storage", "scripting"],
 
-  "host_permissions": ["https://login.ingbank.pl/mojeing/app/*"]
+  "host_permissions": ["https://login.ingbank.pl/mojeing/app/*"],
+
+  "optional_host_permissions": ["*://*/*"]
 }

@@ -15,20 +15,20 @@ set -euo pipefail
 CONFIG="${1:-Debug}"
 MODE="${2:-}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT="$ROOT/xcode/INGMaskFill/INGMaskFill.xcodeproj"
+PROJECT="$ROOT/xcode/MaskFill/MaskFill.xcodeproj"
 
 if [[ "$MODE" == "--signed" ]]; then
-  xcodebuild -project "$PROJECT" -scheme INGMaskFill -configuration "$CONFIG" \
+  xcodebuild -project "$PROJECT" -scheme MaskFill -configuration "$CONFIG" \
     -allowProvisioningUpdates build
 else
   # Ad-hoc: override the project's automatic signing settings.
-  xcodebuild -project "$PROJECT" -scheme INGMaskFill -configuration "$CONFIG" \
+  xcodebuild -project "$PROJECT" -scheme MaskFill -configuration "$CONFIG" \
     CODE_SIGN_IDENTITY="-" \
     CODE_SIGN_STYLE=Manual \
     DEVELOPMENT_TEAM="" \
     build
 fi
 
-xcodebuild -project "$PROJECT" -scheme INGMaskFill -configuration "$CONFIG" \
+xcodebuild -project "$PROJECT" -scheme MaskFill -configuration "$CONFIG" \
   -showBuildSettings 2>/dev/null \
-  | awk '/ BUILT_PRODUCTS_DIR = /{print "Built: " $3 "/INGMaskFill.app"}'
+  | awk '/ BUILT_PRODUCTS_DIR = /{print "Built: " $3 "/MaskFill.app"}'

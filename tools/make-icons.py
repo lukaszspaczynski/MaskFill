@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Regenerate the placeholder icon set in src/images.
 
-Placeholders only: an orange disc with a white "i". Replace with real artwork
-before shipping, then re-run nothing -- this script would overwrite it.
+Placeholders only: an indigo disc with three dots, standing for the masked
+characters. Deliberately carries no bank's branding. Replace with real artwork
+before shipping, then delete this script -- it would overwrite it.
 
 Usage: python3 tools/make-icons.py
 """
@@ -14,7 +15,7 @@ OUT = Path(__file__).resolve().parent.parent / "src" / "images"
 ICON_SIZES = [48, 96, 128, 256, 512]
 TOOLBAR_SIZES = [16, 32]
 
-ORANGE = (255, 98, 0)  # ING brand orange
+INDIGO = (88, 86, 214)
 WHITE = (255, 255, 255)
 
 
@@ -45,13 +46,12 @@ def render(size):
                 row += bytes((0, 0, 0, 0))
                 continue
 
-            rgb = ORANGE
-            # Dot of the "i".
-            dot = coverage(x, y, c, size * 0.28, size * 0.075)
-            # Stem of the "i".
-            stem_x = abs(x + 0.5 - c) <= size * 0.07
-            stem_y = size * 0.42 <= y + 0.5 <= size * 0.74
-            mark = max(dot, 1.0 if (stem_x and stem_y) else 0.0)
+            rgb = INDIGO
+            # Three dots, like the characters a masked password shows.
+            mark = max(
+                coverage(x, y, c + offset * size * 0.21, c, size * 0.082)
+                for offset in (-1, 0, 1)
+            )
             if mark:
                 rgb = blend(rgb, WHITE, mark)
 

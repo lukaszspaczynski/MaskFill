@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>running…</title>
+    <style>
+      li.pass::marker { content: "PASS "; color: #137333; }
+      li.fail::marker { content: "FAIL "; color: #d1242f; }
+      li { font-family: ui-monospace, monospace; }
+      #host { border: 1px dashed #ccc; padding: 10px; margin-bottom: 20px; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Exercises the real options page: it fetches src/options/options.html,
+      mounts its markup, stubs the extension APIs, then loads the real
+      src/options/options.js against it. Nothing here duplicates the page, so
+      the assertions cannot drift away from what ships.
+
+      Run via tools/test-content.sh (needs Chrome's --allow-file-access-from-files).
+    -->
+    <h3>Edytor reguł</h3>
+    <div id="host"></div>
+    <h4>Wynik testów</h4>
+    <ul id="results"></ul>
+
+    <script>
+      const calls = { save: [], permissions: [] };
+
+      const STORED = [
+        {
+          name: "Moje ING",
+          matches: ["https://login.ingbank.pl/mojeing/app/*"],
+          field: 'input[name^="password-"]',
+          position: { from: "name", pattern: "password-(\\d+)", base: 0 },
+        },
+      ];
+
+      window.browser = {
+        runtime: {
+          async sendMessage(message) {
+            switch (message.type) {
+              case "getRules":
+                return structuredClone(STORED);
+              case "saveRules":
+                calls.save.push(structuredClone(message.rules));
+                return message.rules;
+              default:
+                return null;
+            }
+          },
+        },
+        permissions: {
+          async request(request) {
+            calls.permissions.push(request);
+            return true;
+          },
+        },
+        storage: { local: { async remove() {} } },
+      };
+    </script>
+
+    <script type="module">
+      const results = document.getElementById("results");
+      let failures = 0;
+
+      const check = (label, condition) => {
+        const li = document.createElement("li");
+        li.className = condition ? "pass" : "fail";
+        li.textContent = label;
+        results.append(li);
+        if (!condition) failures += 1;
+      };
+
+      try {
+      // Mount the real page markup, minus its own script tag.
+      const html = await (await fetch("../src/options/options.html")).text();
+      const parsed = new DOMParser().parseFromString(html, "text/html");
+      parsed.querySelectorAll("script").forEach((s) => s.remove());
+      document.getElementById("host").append(...parsed.body.childNodes);
+      document.head.append(...parsed.head.querySelectorAll("style"));
+
+      // Then the real logic.
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "../src/options/options.js";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.append(script);
+      });
+      await new Promise((r) => setTimeout(r, 50)); // let init()'s await settle
+
+      const cards = () => [...document.querySelectorAll(".rule")];
+      const rows = (card) => [...card.querySelectorAll(".matches div")].slice(0, -1);
+      const byText = (root, text) =>
+        [...root.querySelectorAll("button")].find((b) => b.textContent === text);
+      const model = () => JSON.parse(document.getElementById("json").value);
+
+      check("renders one card for the stored rule", cards().length === 1);
+      check("shows the rule's single address", rows(cards()[0]).length === 1);
+      check(
+        "reveals no 'printed' field for a name-based rule",
+        !cards()[0].textContent.includes("Element z cyfrą")
+      );
+
+      // Editing a field updates the model without a re-render.
+      const nameInput = cards()[0].querySelector(".rule-head input");
+      nameInput.value = "Zmieniona";
+      nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+      check("typing updates the model", model()[0].name === "Zmieniona");
+      check("typing does not steal focus by re-rendering", cards().length === 1);
+
+      // Multiple addresses per rule.
+      byText(cards()[0], "+ Dodaj adres").click();
+      check("adds a second address row", rows(cards()[0]).length === 2);
+      const second = rows(cards()[0])[1].querySelector("input");
+      second.value = "https://inny.bank.pl/login/*";
+      second.dispatchEvent(new Event("input", { bubbles: true }));
+      check("second address reaches the model", model()[0].matches.length === 2);
+
+      rows(cards()[0])[0].querySelector("button").click();
+      check("removes an address row", rows(cards()[0]).length === 1);
+      check("kept the right one", model()[0].matches[0] === "https://inny.bank.pl/login/*");
+
+      // Rules are independent tuples.
+      byText(document, "+ Dodaj regułę").click();
+      check("adds a second rule", cards().length === 2);
+      check("new rule starts with one empty address", rows(cards()[1]).length === 1);
+
+      // Switching the position source reveals its extra field.
+      const fromSelect = cards()[1].querySelector("select");
+      fromSelect.value = "printed";
+      fromSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      check(
+        "'printed' reveals the digit-element selector",
+        cards()[1].textContent.includes("Element z cyfrą")
+      );
+
+      byText(cards()[1], "Usuń regułę").click();
+      check("removes a rule", cards().length === 1);
+      check("removing the second rule left the first", model()[0].name === "Zmieniona");
+
+      // A rule with no field selector cannot be saved -- querySelector("")
+      // throws, and a rule that matches nothing is not worth storing.
+      byText(document, "+ Dodaj regułę").click();
+      const fresh = cards()[1];
+      const setValue = (input, value) => {
+        input.value = value;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+      setValue(fresh.querySelector(".rule-head input"), "Bez selektora");
+
+      byText(document, "Zapisz reguły").click();
+      await new Promise((r) => setTimeout(r, 30));
+      check("refuses to save a rule with no field selector", calls.save.length === 0);
+      check(
+        "and says which rule is at fault",
+        document.getElementById("rules-message").textContent.includes("Reguła 2")
+      );
+
+      // With a valid selector it saves, asking only for the addresses actually
+      // written down.
+      const fieldInput = [...fresh.querySelectorAll('input[type="text"]')].find((i) =>
+        i.placeholder.includes("password-")
+      );
+      setValue(fieldInput, "input.pw");
+      byText(document, "Zapisz reguły").click();
+      await new Promise((r) => setTimeout(r, 30));
+
+      check("saves once the rule is complete", calls.save.length === 1);
+      check("requested host access", calls.permissions.length === 1);
+      check(
+        "asked only for non-empty addresses",
+        JSON.stringify(calls.permissions[0].origins) ===
+          JSON.stringify(["https://inny.bank.pl/login/*"])
+      );
+      check("blank address was dropped before saving", calls.save[0][1].matches.length === 0);
+
+      } catch (error) {
+        check(`fixture threw: ${error.message}`, false);
+      }
+
+      document.title = failures === 0 ? "ALL TESTS PASSED" : `${failures} TEST FAILURE(S)`;
+    </script>
+  </body>
+</html>
