@@ -25,7 +25,7 @@
     <ul id="results"></ul>
 
     <script>
-      const calls = { save: [], permissions: [], import: [], deleteSealed: [] };
+      const calls = { save: [], permissions: [], import: [], deleteSealed: [], setMatches: [] };
       let sealedStore = [];  // what the background would hold
 
       const STORED = [
@@ -58,6 +58,10 @@
               case "deleteSealedRule":
                 calls.deleteSealed.push(message.index);
                 sealedStore.splice(message.index, 1);
+                return sealedStore.map((p) => ({ matches: p.matches }));
+              case "setSealedMatches":
+                calls.setMatches.push({ index: message.index, matches: message.matches });
+                sealedStore[message.index].matches = message.matches;
                 return sealedStore.map((p) => ({ matches: p.matches }));
               default:
                 return null;
@@ -191,7 +195,7 @@
       check("blank address was dropped before saving", calls.save[0][1].matches.length === 0);
 
       // ----- sealed (paid) rules in the UI -----
-      const sealedCards = () => [...document.querySelectorAll(".sealed-rule")];
+      const sealedCards = () => [...document.getElementById("sealed").querySelectorAll(".rule")];
       const setSealed = (value) => {
         const box = document.getElementById("sealed-input");
         box.value = value;
@@ -217,10 +221,29 @@
       importBtn.click();
       await new Promise((r) => setTimeout(r, 30));
       check("a signed package is imported", sealedCards().length === 1);
-      check("the card shows the address", sealedCards()[0].textContent.includes("login.example.pl"));
+      check("the card shows the address",
+        [...sealedCards()[0].querySelectorAll(".matches input")].some((i) =>
+          i.value.includes("login.example.pl")));
       check("the card shows no rule contents", !sealedCards()[0].textContent.includes("c2VjcmV0"));
 
-      byText(sealedCards()[0], "Usuń").click();
+      // The user can add and save a domain on a sealed rule, without ever
+      // seeing its contents.
+      const card = sealedCards()[0];
+      byText(card, "+ Dodaj adres").click();
+      const newAddr = [...card.querySelectorAll(".matches input")].at(-1);
+      newAddr.value = "https://login.example.pl/regional/*";
+      newAddr.dispatchEvent(new Event("input", { bubbles: true }));
+
+      byText(card, "Zapisz adresy").click();
+      await new Promise((r) => setTimeout(r, 30));
+      check("saving edited domains requested access for them",
+        calls.permissions.at(-1).origins.includes("https://login.example.pl/regional/*"));
+      check("both domains were saved",
+        calls.setMatches.at(-1).matches.length === 2);
+      check("the rule's contents were never exposed to edit them",
+        !sealedCards()[0].textContent.includes("c2VjcmV0"));
+
+      byText(sealedCards()[0], "Usuń regułę").click();
       await new Promise((r) => setTimeout(r, 30));
       check("a sealed rule can be removed", sealedCards().length === 0);
 

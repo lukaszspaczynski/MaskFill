@@ -28,25 +28,74 @@ async function init() {
 
 async function renderSealed() {
   const sealed = await browser.runtime.sendMessage({ type: "getSealedRules" });
-  sealedContainer.replaceChildren(
-    ...sealed.map((rule, index) => {
-      const card = el("div", { className: "sealed-rule" });
-      card.append(
-        el("span", { className: "lock", textContent: "🔒" }),
-        el("span", { className: "addr", textContent: rule.matches.join(", ") }),
-        button("Usuń", async () => {
-          await browser.runtime.sendMessage({ type: "deleteSealedRule", index });
-          renderSealed();
-        })
-      );
-      return card;
-    })
-  );
+  sealedContainer.replaceChildren(...sealed.map(renderSealedRule));
   if (!sealed.length) {
     sealedContainer.append(
       el("p", { className: "subtle", textContent: "Brak zaimportowanych reguł." })
     );
   }
+}
+
+// A sealed rule shows a lock (its contents stay hidden) and an editable list of
+// the addresses it runs on -- those belong to the user.
+function renderSealedRule(rule, index) {
+  const card = el("div", { className: "rule" });
+
+  const head = el("div", { className: "rule-head" });
+  head.append(
+    el("span", { className: "lock", textContent: "🔒 reguła płatna" }),
+    el("span", { className: "spacer", style: "flex:1" }),
+    button("Usuń regułę", async () => {
+      await browser.runtime.sendMessage({ type: "deleteSealedRule", index });
+      renderSealed();
+    })
+  );
+  card.append(head);
+
+  const draft = [...rule.matches];
+  const wrap = labelled("Adresy", el("div", { className: "matches" }));
+  const list = wrap.querySelector(".matches");
+
+  const redraw = () => {
+    list.replaceChildren();
+    draft.forEach((pattern, i) => {
+      const row = el("div");
+      const input = el("input", { type: "text", value: pattern, placeholder: "https://…/*" });
+      input.addEventListener("input", () => (draft[i] = input.value));
+      row.append(input, button("×", () => { draft.splice(i, 1); redraw(); }));
+      list.append(row);
+    });
+    const add = el("div");
+    add.append(button("+ Dodaj adres", () => { draft.push(""); redraw(); }));
+    list.append(add);
+  };
+  redraw();
+  card.append(wrap);
+
+  const actions = el("div", { className: "row" });
+  actions.append(
+    button("Zapisz adresy", async () => {
+      const origins = draft.map((m) => m.trim()).filter(Boolean);
+      let granted = true;
+      if (origins.length) {
+        try {
+          granted = await browser.permissions.request({ origins });
+        } catch (error) {
+          return report(sealedMessage, `Nie udało się poprosić o dostęp: ${error.message}`, true);
+        }
+      }
+      await browser.runtime.sendMessage({ type: "setSealedMatches", index, matches: origins });
+      renderSealed();
+      report(
+        sealedMessage,
+        granted ? "Zapisano adresy." : "Zapisano, ale bez dostępu do części adresów — nadaj go w Ustawieniach Safari.",
+        !granted
+      );
+    })
+  );
+  card.append(actions);
+
+  return card;
 }
 
 document.getElementById("import-sealed").addEventListener("click", async () => {

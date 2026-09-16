@@ -1,0 +1,6 @@
+{
+  "matches": ["https://login.ingbank.pl/mojeing/app/*"],
+  "field": "input[name^=\"password-\"]",
+  "position": { "from": "name", "pattern": "password-(\\d+)", "base": 0 },
+  "disabledWhen": "[disabled],[readonly]"
+}

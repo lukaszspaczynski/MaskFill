@@ -51,6 +51,8 @@ browser.runtime.onMessage.addListener((message) => {
       return importSealedRule(message.package);
     case "deleteSealedRule":
       return deleteSealedRule(message.index);
+    case "setSealedMatches":
+      return setSealedMatches(message.index, message.matches);
 
     default:
       return false;
@@ -152,11 +154,27 @@ async function importSealedRule(pkg) {
   const sealedRules = await loadSealedRules();
 
   // A re-imported package (same signature) replaces the old copy rather than
-  // stacking up.
+  // stacking up -- but keeps the domains the user had set, since those are
+  // theirs, not the package's.
+  const previous = sealedRules.find((existing) => existing.sig === pkg.sig);
+  const matches = previous?.matches ?? (Array.isArray(pkg.matches) ? pkg.matches : []);
+
   const next = sealedRules.filter((existing) => existing.sig !== pkg.sig);
-  next.push({ matches: pkg.matches, sealed: pkg.sealed, sig: pkg.sig });
+  next.push({ matches, sealed: pkg.sealed, sig: pkg.sig });
 
   await browser.storage.local.set({ sealedRules: next });
+  await syncContentScripts();
+  return listSealedRules();
+}
+
+// The user owns a sealed rule's domains; its signed contents are untouched.
+async function setSealedMatches(index, matches) {
+  const sealedRules = await loadSealedRules();
+  const rule = sealedRules[index];
+  if (!rule) throw new Error("Nie ma takiej reguły.");
+
+  rule.matches = (matches ?? []).map((m) => m.trim()).filter(Boolean);
+  await browser.storage.local.set({ sealedRules });
   await syncContentScripts();
   return listSealedRules();
 }

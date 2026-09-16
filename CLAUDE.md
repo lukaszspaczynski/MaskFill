@@ -172,9 +172,14 @@ A rule can also arrive as a sealed package:
 { "matches": ["https://online.mbank.pl/*"], "sealed": "<base64>", "sig": "<base64>" }
 ```
 
-Only `matches` is in the clear -- the importer must see, and grant access to, the
-site it runs on. Everything else (`field`, `position`, `disabledWhen`) is
-AES-GCM encrypted; the package is signed with an ECDSA P-256 key. `src/crypto/`:
+Everything except `matches` (`field`, `position`, `disabledWhen`) is AES-GCM
+encrypted, and the package is signed with an ECDSA P-256 key. The signature
+covers **only the ciphertext**, not `matches`: the encrypted contents are the
+vendor's and cannot be altered, but which of their sites a rule runs on is the
+user's to edit -- they add, change and remove addresses on a sealed rule in the
+options page, and each change re-requests host access. The package ships a
+suggested `matches`; on re-import the user's edited addresses are kept.
+`src/crypto/`:
 
 - `keys.js` -- **generated** by `tools/gen-keys.mjs`. Ships the public verify key
   and the AES key. Regenerating rotates the keys and invalidates every package
@@ -195,7 +200,9 @@ Two honest limits, both worth keeping in mind before leaning on this:
   casual copying; it is not DRM. The *signature* is the real guarantee -- it
   decides what runs.
 - Sealed rules are stored encrypted at rest and only opened in `ruleFor()`, so
-  `getSealedRules()` (what the options list shows) exposes only `matches`.
+  `getSealedRules()` (what the options list shows) exposes only `matches`, which
+  the user edits via `setSealedMatches`. The contents are never shown, even
+  while editing the domains.
 
 Storage keeps the two kinds apart: `rules` is the user's editable list, tested
 against a page first; `sealedRules` holds imported packages, tried second. The

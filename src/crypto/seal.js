@@ -4,8 +4,12 @@
 //
 // A package looks like:
 //   { matches: [...], sealed: "<base64 iv|ciphertext>", sig: "<base64>" }
-// Only `matches` is in the clear. The signature covers matches + sealed, so
-// neither can be altered without invalidating it.
+//
+// The signature covers ONLY `sealed` -- the encrypted rule contents. It proves
+// those are the ones we issued and unaltered. `matches` is deliberately outside
+// the signature: it is the user's to add to, edit, or remove, since which of
+// their sites a rule covers is their business, not the vendor's. The package
+// ships a suggested `matches`, but nothing binds a stored rule to it.
 
 (() => {
   const enc = new TextEncoder();
@@ -13,10 +17,9 @@
 
   const fromB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
-  // The bytes the signature is computed over. Tool and extension must build
-  // this identically, so the shape is fixed here and mirrored in sign-rule.mjs.
-  const signedBytes = (matches, sealed) =>
-    enc.encode(JSON.stringify(matches) + "." + sealed);
+  // The bytes the signature is computed over: the ciphertext only. Tool and
+  // extension must build this identically; mirrored in sign-rule.mjs.
+  const signedBytes = (sealed) => enc.encode(sealed);
 
   let verifyKeyPromise;
   let aesKeyPromise;
@@ -42,13 +45,13 @@
   }
 
   async function isSignatureValid(pkg) {
-    if (!pkg || !Array.isArray(pkg.matches) || !pkg.sealed || !pkg.sig) return false;
+    if (!pkg || !pkg.sealed || !pkg.sig) return false;
     try {
       return await crypto.subtle.verify(
         { name: "ECDSA", hash: "SHA-256" },
         await verifyKey(),
         fromB64(pkg.sig),
-        signedBytes(pkg.matches, pkg.sealed)
+        signedBytes(pkg.sealed)
       );
     } catch {
       return false;

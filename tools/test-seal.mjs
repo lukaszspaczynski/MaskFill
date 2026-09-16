@@ -47,9 +47,13 @@ check("opens to the original rule",
 check("carries the cleartext matches through",
   JSON.stringify(opened.matches) === JSON.stringify(["https://login.example.pl/*"]));
 
-// Tampering with the cleartext matches must break the signature.
-const movedHost = { ...pkg, matches: ["https://login.evil.pl/*"] };
-check("rejects a package whose matches were swapped", !(await Seal.isSignatureValid(movedHost)));
+// matches is outside the signature: the user may change which sites a rule
+// covers, and the package still verifies.
+const movedHost = { ...pkg, matches: ["https://login.example.pl/other/*"] };
+check("accepts a package whose matches were changed", await Seal.isSignatureValid(movedHost));
+const openedMoved = await Seal.open(movedHost);
+check("open() honours the caller's matches",
+  JSON.stringify(openedMoved.matches) === JSON.stringify(["https://login.example.pl/other/*"]));
 
 // Tampering with the ciphertext must break the signature.
 const flipped = { ...pkg, sealed: pkg.sealed.slice(0, -2) + (pkg.sealed.endsWith("A") ? "B" : "A") + "=" };
@@ -61,7 +65,7 @@ const forgedSig = Buffer.from(
   await crypto.subtle.sign(
     { name: "ECDSA", hash: "SHA-256" },
     other.privateKey,
-    new TextEncoder().encode(JSON.stringify(pkg.matches) + "." + pkg.sealed)
+    new TextEncoder().encode(pkg.sealed)
   )
 ).toString("base64");
 check("rejects a rule signed with an unknown key",

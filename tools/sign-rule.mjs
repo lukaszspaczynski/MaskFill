@@ -10,8 +10,10 @@
 //     "field": "input.pw",
 //     "position": { "from": "label" }
 //   }
-// Everything except `matches` is encrypted; `matches` stays in the clear so the
-// importer can see, and grant access to, the site it runs on.
+// Everything except `matches` is encrypted. `matches` ships as a suggestion
+// only -- it is not signed, so the importer can change which of their sites the
+// rule covers. The signature covers the encrypted contents, which cannot be
+// altered.
 
 import { webcrypto as crypto } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -58,14 +60,10 @@ const ciphertext = new Uint8Array(
 );
 const sealed = b64(Uint8Array.from([...iv, ...ciphertext]));
 
-// Sign matches + sealed. Must match seal.js's signedBytes() exactly.
+// Sign the ciphertext only. Must match seal.js's signedBytes() exactly.
 const sig = b64(
   new Uint8Array(
-    await crypto.subtle.sign(
-      { name: "ECDSA", hash: "SHA-256" },
-      signKey,
-      enc.encode(JSON.stringify(matches) + "." + sealed)
-    )
+    await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, signKey, enc.encode(sealed))
   )
 );
 
