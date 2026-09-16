@@ -12,6 +12,11 @@ if [[ ! -x "$CHROME" ]]; then
 fi
 
 status=0
+
+echo "── test-seal.mjs"
+node "$ROOT/tools/test-seal.mjs" || status=1
+echo
+
 for fixture in "$ROOT"/tools/mock-*.html; do
   echo "── $(basename "$fixture")"
 

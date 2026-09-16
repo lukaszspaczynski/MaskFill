@@ -15,6 +15,18 @@ host permission, the selectors and the fixture all target Moje ING. Those are
 different things; do not "fix" the comments in `content.js` that name ING, they
 describe what the selectors actually match.
 
+## Distribution
+
+The extension is **free**. What is sold is **sealed rules**: pre-built rules for
+banks whose widgets are awkward to configure, delivered as signed, encrypted
+packages a customer imports. There is no licence server or in-app purchase.
+
+Note that Apple charges for distribution regardless: Developer ID plus
+notarization, and Mac App Store submission, both need the $99/year Developer
+Program. Building from source with a free Personal Team
+(`tools/install.sh Debug --signed`) is the zero-cost route and works for anyone
+who can run Xcode.
+
 ## Commands
 
 ```sh
@@ -151,6 +163,48 @@ assertion for exactly this.
 
 `tools/inspect-widget.js` dumps a live widget's structure from the Web Inspector
 console (never values) when writing a rule for a new site.
+
+### Sealed (paid) rules
+
+A rule can also arrive as a sealed package:
+
+```json
+{ "matches": ["https://online.mbank.pl/*"], "sealed": "<base64>", "sig": "<base64>" }
+```
+
+Only `matches` is in the clear -- the importer must see, and grant access to, the
+site it runs on. Everything else (`field`, `position`, `disabledWhen`) is
+AES-GCM encrypted; the package is signed with an ECDSA P-256 key. `src/crypto/`:
+
+- `keys.js` -- **generated** by `tools/gen-keys.mjs`. Ships the public verify key
+  and the AES key. Regenerating rotates the keys and invalidates every package
+  signed with the old ones.
+- `seal.js` -- `Seal.isSignatureValid()` and `Seal.open()`. Verifies **before**
+  decrypting; a package we did not sign never runs. Loaded in the background
+  worker via `importScripts`.
+
+`tools/sign-rule.mjs` is the vendor tool that turns a plaintext rule into a
+package. It needs `keys/signing-private.jwk`, which is **gitignored** -- the
+private key is the root of trust and must never be committed, or anyone could
+mint rules the extension trusts. `keys/` is created by `gen-keys.mjs`.
+
+Two honest limits, both worth keeping in mind before leaning on this:
+
+- **The AES layer is obfuscation, not secrecy.** Its key ships in every copy of
+  the extension, so a determined user can recover a rule's contents. It stops
+  casual copying; it is not DRM. The *signature* is the real guarantee -- it
+  decides what runs.
+- Sealed rules are stored encrypted at rest and only opened in `ruleFor()`, so
+  `getSealedRules()` (what the options list shows) exposes only `matches`.
+
+Storage keeps the two kinds apart: `rules` is the user's editable list, tested
+against a page first; `sealedRules` holds imported packages, tried second. The
+options editor only ever touches `rules`, so it cannot clobber a sealed package.
+
+**Never accept a rule from anywhere but a signed package or the user's own
+editor.** No "import from URL", no auto-update feed -- a rule is a selector and a
+regex applied to a login page, so an unsigned rule from a third party is a
+credential-theft primitive.
 
 ### Permissions for user-added sites
 

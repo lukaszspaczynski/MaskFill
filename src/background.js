@@ -1,8 +1,15 @@
 // Owns the rule set and decides which rule applies to a given page.
 //
-// The password never reaches this worker at all. The popup takes it from the
-// user's password manager, derives the requested characters there, and lets it
-// go -- nothing is stored, here or anywhere else.
+// Rules come in two kinds. User rules are plaintext and fully editable. Sealed
+// rules are the paid ones: only their `matches` is readable, the rest is
+// encrypted, and they only run if signed with the key we shipped. seal.js does
+// the verifying and decrypting.
+//
+// The password never reaches this worker either way. The popup takes it from
+// the user's password manager, derives the requested characters there, and lets
+// it go -- nothing is stored, here or anywhere else.
+
+importScripts("crypto/keys.js", "crypto/seal.js");
 
 // Kept in step with manifest.json's content_scripts entry.
 const MANIFEST_MATCHES = ["https://login.ingbank.pl/mojeing/app/*"];
@@ -38,6 +45,13 @@ browser.runtime.onMessage.addListener((message) => {
     case "saveRules":
       return saveRules(message.rules);
 
+    case "getSealedRules":
+      return listSealedRules();
+    case "importSealedRule":
+      return importSealedRule(message.package);
+    case "deleteSealedRule":
+      return deleteSealedRule(message.index);
+
     default:
       return false;
   }
@@ -64,10 +78,12 @@ async function saveRules(rules) {
 async function syncContentScripts() {
   if (!browser.scripting?.registerContentScripts) return;
 
-  const rules = await loadRules();
+  // Both kinds of rule need a content script; sealed rules expose their
+  // matches in the clear, which is all this needs.
+  const all = [...(await loadRules()), ...(await loadSealedRules())];
   const wanted = [];
 
-  for (const [index, rule] of rules.entries()) {
+  for (const [index, rule] of all.entries()) {
     // Skip anything the static manifest entry already covers.
     const extra = rule.matches.filter((p) => !MANIFEST_MATCHES.includes(p));
     if (!extra.length) continue;
@@ -103,10 +119,54 @@ async function syncContentScripts() {
   }
 }
 
-/** First rule whose patterns match, or null. */
+// User rules win over paid ones, so a user can always override with their own.
 async function ruleFor(url) {
-  const rules = await loadRules();
-  return rules.find((rule) => rule.matches.some((p) => matchPattern(p, url))) ?? null;
+  const applies = (rule) => rule.matches.some((p) => matchPattern(p, url));
+
+  const userRule = (await loadRules()).find(applies);
+  if (userRule) return userRule;
+
+  const sealed = (await loadSealedRules()).find(applies);
+  if (!sealed) return null;
+  try {
+    return await Seal.open(sealed); // verifies signature, then decrypts
+  } catch {
+    return null; // tampered or not ours -- behave as if it were not there
+  }
+}
+
+async function loadSealedRules() {
+  const { sealedRules } = await browser.storage.local.get({ sealedRules: [] });
+  return sealedRules;
+}
+
+/** For the options list: only the cleartext part is ever exposed. */
+async function listSealedRules() {
+  return (await loadSealedRules()).map((pkg) => ({ matches: pkg.matches }));
+}
+
+async function importSealedRule(pkg) {
+  if (!(await Seal.isSignatureValid(pkg))) {
+    throw new Error("To nie jest reguła podpisana dla tego rozszerzenia.");
+  }
+  const sealedRules = await loadSealedRules();
+
+  // A re-imported package (same signature) replaces the old copy rather than
+  // stacking up.
+  const next = sealedRules.filter((existing) => existing.sig !== pkg.sig);
+  next.push({ matches: pkg.matches, sealed: pkg.sealed, sig: pkg.sig });
+
+  await browser.storage.local.set({ sealedRules: next });
+  await syncContentScripts();
+  return listSealedRules();
+}
+
+async function deleteSealedRule(index) {
+  const sealedRules = await loadSealedRules();
+  sealedRules.splice(index, 1);
+  await browser.storage.local.set({ sealedRules });
+  await syncContentScripts();
+  return listSealedRules();
 }
 
 /**

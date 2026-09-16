@@ -25,7 +25,8 @@
     <ul id="results"></ul>
 
     <script>
-      const calls = { save: [], permissions: [] };
+      const calls = { save: [], permissions: [], import: [], deleteSealed: [] };
+      let sealedStore = [];  // what the background would hold
 
       const STORED = [
         {
@@ -45,6 +46,19 @@
               case "saveRules":
                 calls.save.push(structuredClone(message.rules));
                 return message.rules;
+              case "getSealedRules":
+                return sealedStore.map((p) => ({ matches: p.matches }));
+              case "importSealedRule":
+                // Mirror the real gate: reject anything without our marker sig.
+                calls.import.push(message.package);
+                if (message.package.sig !== "VALID") throw new Error("zły podpis");
+                sealedStore = sealedStore.filter((p) => p.sig !== message.package.sig);
+                sealedStore.push(message.package);
+                return sealedStore.map((p) => ({ matches: p.matches }));
+              case "deleteSealedRule":
+                calls.deleteSealed.push(message.index);
+                sealedStore.splice(message.index, 1);
+                return sealedStore.map((p) => ({ matches: p.matches }));
               default:
                 return null;
             }
@@ -175,6 +189,40 @@
           JSON.stringify(["https://inny.bank.pl/login/*"])
       );
       check("blank address was dropped before saving", calls.save[0][1].matches.length === 0);
+
+      // ----- sealed (paid) rules in the UI -----
+      const sealedCards = () => [...document.querySelectorAll(".sealed-rule")];
+      const setSealed = (value) => {
+        const box = document.getElementById("sealed-input");
+        box.value = value;
+      };
+      const importBtn = byText(document, "Importuj regułę");
+
+      check("starts with no sealed rules shown", sealedCards().length === 0);
+
+      // A package the extension did not sign must be refused.
+      setSealed(JSON.stringify({ matches: ["https://x.pl/*"], sealed: "AA==", sig: "FORGED" }));
+      importBtn.click();
+      await new Promise((r) => setTimeout(r, 30));
+      check("import requested host access", calls.permissions.some((p) =>
+        JSON.stringify(p.origins) === JSON.stringify(["https://x.pl/*"])));
+      check("an unsigned package is rejected", sealedCards().length === 0);
+      check("rejection is reported",
+        document.getElementById("sealed-message").classList.contains("error"));
+
+      // A valid package shows up by its address only -- no contents.
+      setSealed(JSON.stringify({
+        matches: ["https://login.example.pl/*"], sealed: "c2VjcmV0", sig: "VALID",
+      }));
+      importBtn.click();
+      await new Promise((r) => setTimeout(r, 30));
+      check("a signed package is imported", sealedCards().length === 1);
+      check("the card shows the address", sealedCards()[0].textContent.includes("login.example.pl"));
+      check("the card shows no rule contents", !sealedCards()[0].textContent.includes("c2VjcmV0"));
+
+      byText(sealedCards()[0], "Usuń").click();
+      await new Promise((r) => setTimeout(r, 30));
+      check("a sealed rule can be removed", sealedCards().length === 0);
 
       } catch (error) {
         check(`fixture threw: ${error.message}`, false);

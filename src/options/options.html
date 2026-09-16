@@ -50,6 +50,13 @@
 
       details { margin-top: 14px; }
       summary { cursor: pointer; font-size: 12px; opacity: 0.75; }
+      #sealed-input { width: 100%; box-sizing: border-box; min-height: 70px; padding: 6px;
+                     font: 11px/1.5 ui-monospace, SFMono-Regular, monospace; }
+      .sealed-rule { display: flex; gap: 8px; align-items: center;
+                     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+                     border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
+      .sealed-rule .addr { flex: 1; font: 12px/1.4 ui-monospace, monospace; }
+      .sealed-rule .lock { opacity: 0.6; }
       details textarea {
         width: 100%; box-sizing: border-box; min-height: 200px; margin-top: 8px; padding: 6px;
         font: 11px/1.5 ui-monospace, SFMono-Regular, monospace;
@@ -73,6 +80,25 @@
       <button id="save-rules" class="small" type="button">Zapisz reguły</button>
     </div>
     <p id="rules-message" class="message" hidden></p>
+
+    <h2>Reguły płatne</h2>
+    <p class="subtle">
+      Zaimportowane reguły są zaszyfrowane i podpisane — widoczne są tylko
+      adresy, na których działają. Uruchamiają się wyłącznie, jeśli podpis się
+      zgadza.
+    </p>
+
+    <div id="sealed"></div>
+
+    <div class="field">
+      <span>Wklej pakiet reguły (JSON)</span>
+      <textarea id="sealed-input" spellcheck="false"
+                placeholder='{ "matches": [...], "sealed": "...", "sig": "..." }'></textarea>
+    </div>
+    <div class="row">
+      <button id="import-sealed" class="small" type="button">Importuj regułę</button>
+    </div>
+    <p id="sealed-message" class="message" hidden></p>
 
     <details>
       <summary>JSON — podgląd, kopiowanie, wklejanie</summary>

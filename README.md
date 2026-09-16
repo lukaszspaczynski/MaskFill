@@ -8,7 +8,9 @@ and keeping nothing.
 
 Ships with a rule for Moje ING and lets you add your own: each rule says which
 addresses it covers, how to find the character boxes, and how to read the
-position number off them. See **Ustawienia → Reguły**.
+position number off them. Rules can also be imported as signed, encrypted
+packages whose only readable part is the address they run on. See
+**Ustawienia → Reguły**.
 
 ## Trade-offs, read before installing
 

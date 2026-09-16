@@ -21,6 +21,7 @@
 		50646B7A3058853200885438 /* popup in Resources */ = {isa = PBXBuildFile; fileRef = 50646B743058853200885438 /* popup */; };
 		50646B7B3058853200885438 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 50646B753058853200885438 /* background.js */; };
 		50646B7C3058853200885438 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 50646B763058853200885438 /* images */; };
+		50646BCD3058853200885438 /* crypto in Resources */ = {isa = PBXBuildFile; fileRef = 50646BCC3058853200885438 /* crypto */; };
 		50646B7D3058853200885438 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 50646B773058853200885438 /* manifest.json */; };
 		50646B7E3058853200885438 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 50646B783058853200885438 /* content.js */; };
 /* End PBXBuildFile section */
@@ -67,6 +68,7 @@
 		50646B743058853200885438 /* popup */ = {isa = PBXFileReference; lastKnownFileType = folder; name = popup; path = ../../../src/popup; sourceTree = "<group>"; };
 		50646B753058853200885438 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = background.js; path = ../../../src/background.js; sourceTree = "<group>"; };
 		50646B763058853200885438 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = ../../../src/images; sourceTree = "<group>"; };
+		50646BCC3058853200885438 /* crypto */ = {isa = PBXFileReference; lastKnownFileType = folder; name = crypto; path = ../../../src/crypto; sourceTree = "<group>"; };
 		50646B773058853200885438 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = ../../../src/manifest.json; sourceTree = "<group>"; };
 		50646B783058853200885438 /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = content.js; path = ../../../src/content.js; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -148,6 +150,7 @@
 				50646B743058853200885438 /* popup */,
 				50646B753058853200885438 /* background.js */,
 				50646B763058853200885438 /* images */,
+				50646BCC3058853200885438 /* crypto */,
 				50646B773058853200885438 /* manifest.json */,
 				50646B783058853200885438 /* content.js */,
 			);
@@ -256,6 +259,7 @@
 			files = (
 				50646B7E3058853200885438 /* content.js in Resources */,
 				50646B7C3058853200885438 /* images in Resources */,
+				50646BCD3058853200885438 /* crypto in Resources */,
 				50646B793058853200885438 /* options in Resources */,
 				50646B7D3058853200885438 /* manifest.json in Resources */,
 				50646B7B3058853200885438 /* background.js in Resources */,

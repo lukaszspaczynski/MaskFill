@@ -1,6 +1,9 @@
 const container = document.getElementById("rules");
 const rulesMessage = document.getElementById("rules-message");
 const jsonField = document.getElementById("json");
+const sealedContainer = document.getElementById("sealed");
+const sealedInput = document.getElementById("sealed-input");
+const sealedMessage = document.getElementById("sealed-message");
 
 const POSITION_SOURCES = [
   ["name", "atrybut name"],
@@ -14,11 +17,73 @@ const POSITION_SOURCES = [
 let rules = [];
 
 init();
+renderSealed();
 
 async function init() {
   rules = await browser.runtime.sendMessage({ type: "getRules" });
   render();
 }
+
+// ---------- sealed (paid) rules ----------
+
+async function renderSealed() {
+  const sealed = await browser.runtime.sendMessage({ type: "getSealedRules" });
+  sealedContainer.replaceChildren(
+    ...sealed.map((rule, index) => {
+      const card = el("div", { className: "sealed-rule" });
+      card.append(
+        el("span", { className: "lock", textContent: "🔒" }),
+        el("span", { className: "addr", textContent: rule.matches.join(", ") }),
+        button("Usuń", async () => {
+          await browser.runtime.sendMessage({ type: "deleteSealedRule", index });
+          renderSealed();
+        })
+      );
+      return card;
+    })
+  );
+  if (!sealed.length) {
+    sealedContainer.append(
+      el("p", { className: "subtle", textContent: "Brak zaimportowanych reguł." })
+    );
+  }
+}
+
+document.getElementById("import-sealed").addEventListener("click", async () => {
+  let pkg;
+  try {
+    pkg = JSON.parse(sealedInput.value);
+  } catch (error) {
+    return report(sealedMessage, `Niepoprawny JSON: ${error.message}`, true);
+  }
+
+  const origins = Array.isArray(pkg.matches) ? pkg.matches : [];
+  if (!origins.length) {
+    return report(sealedMessage, "Pakiet nie zawiera adresów.", true);
+  }
+
+  // Grant host access before storing, while we still have the click gesture.
+  let granted = true;
+  try {
+    granted = await browser.permissions.request({ origins });
+  } catch (error) {
+    return report(sealedMessage, `Nie udało się poprosić o dostęp: ${error.message}`, true);
+  }
+
+  try {
+    await browser.runtime.sendMessage({ type: "importSealedRule", package: pkg });
+  } catch (error) {
+    return report(sealedMessage, error.message, true);
+  }
+
+  sealedInput.value = "";
+  renderSealed();
+  report(
+    sealedMessage,
+    granted ? "Zaimportowano regułę." : "Zaimportowano, ale bez dostępu do adresów — nadaj go w Ustawieniach Safari.",
+    !granted
+  );
+});
 
 // ---------- rendering ----------
 

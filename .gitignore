@@ -8,6 +8,11 @@ build/
 # macOS
 .DS_Store
 
+# Signing: the private key is the root of trust for paid rules and must never
+# be committed. The public and AES keys ship in the extension (src/crypto),
+# so they are tracked there.
+keys/signing-private.jwk
+
 # Claude Code local settings
 .claude/settings.local.json
 .claude/.headroom_*
