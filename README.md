@@ -12,6 +12,35 @@ position number off them. Rules can also be imported as signed, encrypted
 packages whose only readable part is the address they run on. See
 **Ustawienia → Reguły**.
 
+## How it works
+
+A Manifest V3 Safari Web Extension in plain JavaScript — no framework, no build
+step, no dependencies — wrapped in the macOS container app Safari requires.
+
+- **Nothing is persisted.** The password arrives through macOS autofill (so
+  Touch ID gates every use), lives in one local variable in the popup, and only
+  the characters for the requested positions ever reach the page. An earlier
+  version kept the password in the Keychain; it was removed on purpose, because
+  storing a full banking password undercuts the reason masked passwords exist.
+- **Detection is data, not code.** The content script knows nothing about any
+  bank. It is handed a rule — a CSS selector, where to read each box's position
+  from (`name`, `id`, label, printed text or DOM order) and a regex — and
+  applies it. Reading the position from an attribute rather than counting boxes
+  means a page that omits a box cannot silently shift every other position.
+- **Real-world markup.** ING renders the widget with Lit inside nested open
+  shadow roots, so the content script walks shadow trees to find the inputs. The
+  framework also keeps its own copy of each value, so filling goes through the
+  native `HTMLInputElement` value setter and dispatches `input`/`change` events.
+- **Signed rule packages.** A rule can be shipped as a package whose contents
+  are AES-GCM encrypted and signed with ECDSA P-256 (Web Crypto). The signature
+  is verified before anything is decrypted, so a rule the extension did not
+  sign never runs. The user can still edit which addresses a package covers;
+  the signature binds only the contents.
+- **Least privilege.** The only static host permission is the ING login path.
+  Sites added by the user go through optional host permissions requested per
+  site, and content scripts are registered at runtime only for hosts actually
+  granted. Filling always requires an explicit click.
+
 ## Trade-offs, read before installing
 
 The extension stores nothing: the password goes from your password manager
@@ -54,16 +83,30 @@ submitting. Signing in is always left to you.
 tools/test-content.sh
 ```
 
-Runs `tools/mock-widget.html`, an offline replica of the widget, against the real
-content script. Open that file in a browser to see the same checks visually.
+Runs headless Chrome over offline fixtures that load the shipped source rather
+than copies, so the tests cannot drift from what ships:
+
+- `tools/mock-widget.html` — a replica of ING's Lit widget (shadow roots,
+  slotted inputs, disabled boxes) driving the real content script, including
+  negative controls proving that a non-piercing query finds nothing and a plain
+  `value` assignment never reaches the component.
+- `tools/mock-options.html` — mounts the real settings page with stubbed
+  extension APIs and exercises rule editing and package import.
+- `tools/test-seal.mjs` — signs a rule with the vendor tool and opens it with
+  the extension's `seal.js`, and checks that tampered ciphertext and foreign
+  signatures are rejected.
+
+Open the HTML fixtures in a browser to see the same checks visually.
 
 ## Layout
 
 | Path      | Contents                                                     |
 | --------- | ------------------------------------------------------------ |
 | `src/`    | the extension — plain HTML/CSS/JS, no build step              |
+| `src/crypto/` | public verify key and `seal.js` (verify, then decrypt)    |
+| `rules/`  | the ING rule as plaintext source and as a signed package      |
 | `xcode/`  | container app Safari requires; the native handler is a stub   |
-| `tools/`  | build/run scripts, the offline test fixture, icon generator   |
+| `tools/`  | build/run scripts, test fixtures, key and signing tools       |
 
 ## Writing a rule for another site
 
