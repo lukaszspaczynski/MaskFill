@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<!--
+  The stage for docs/screenshots/fill.png: a neutral bank.example login page
+  with the real popup docked in an iframe. The widget has the same structure as
+  tools/mock-widget.html -- slotted inputs inside nested shadow roots -- and the
+  real src/content.js fills it. Served by tools/screenshots.sh, never by hand.
+-->
+<style>
+  html, body { margin: 0; }
+  body { font: 14px -apple-system, BlinkMacSystemFont, sans-serif; background: #eef0f3;
+         padding: 28px; width: 1124px; box-sizing: border-box; }
+  .browser { background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.12);
+             overflow: hidden; position: relative; }
+  .bar { height: 38px; background: #f6f6f7; border-bottom: 1px solid #e3e3e6;
+         display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .url { margin-left: 16px; flex: 0 0 420px; background: #fff; border: 1px solid #e0e0e4;
+         border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #555; }
+  .ext { margin-left: auto; width: 22px; height: 22px; border-radius: 5px; background: #e8e8ec;
+         display: grid; place-items: center; }
+  .ext img { width: 16px; height: 16px; }
+  .page { padding: 26px 30px 34px; min-height: 300px; }
+  h3 { margin: 0 0 6px; font-size: 18px; }
+  .sub { margin: 0 0 18px; color: #777; font-size: 13px; }
+  #widget-mount { max-width: 690px; }
+  .popover { position: absolute; top: 44px; right: 10px; width: 288px; height: 290px;
+             border: 0; border-radius: 10px; background: #fff;
+             box-shadow: 0 8px 28px rgba(0,0,0,.22), 0 0 0 1px rgba(0,0,0,.06); }
+</style>
+</head>
+<body>
+<div class="browser">
+  <div class="bar">
+    <span class="dot" style="background:#ff5f57"></span>
+    <span class="dot" style="background:#febc2e"></span>
+    <span class="dot" style="background:#28c840"></span>
+    <span class="url">bank.example/login/</span>
+    <span class="ext"><img src="/src/images/icon-48.png" alt="" /></span>
+  </div>
+  <div class="page">
+    <h3>Wpisz wskazane znaki hasła</h3>
+    <p class="sub">Aktywne pola to znaki, o które bank prosi przy tym logowaniu.</p>
+    <div id="widget-mount"></div>
+  </div>
+  <iframe class="popover" src="/popup.html"></iframe>
+</div>
+
+<script>
+  // The real content script registers its listener here; the popup frame calls it.
+  window.browser = { runtime: { onMessage: { addListener(fn) { window.contentListener = fn; } } } };
+
+  const ENABLED = [10, 14, 15, 17, 19];
+  const TOTAL = 32;
+
+  class MaskedField extends HTMLElement {
+    connectedCallback() {
+      if (this.shadowRoot) return;
+      this.attachShadow({ mode: "open" }).innerHTML = `
+        <style>
+          :host { display: inline-block; text-align: center; }
+          ::slotted(input) { width: 30px; height: 38px; text-align: center; font-size: 16px;
+            border: 2px solid #3d4250; border-radius: 7px; box-sizing: border-box; }
+          ::slotted(input:disabled) { border-color: #e1e3e8; background: #f4f5f7; }
+          ::slotted([slot="after"]) { display: block; color: #9a9ea8; font-size: 11px; margin-top: 3px; }
+        </style>
+        <slot name="input"></slot><slot name="after"></slot>`;
+    }
+  }
+  customElements.define("masked-field", MaskedField);
+
+  class AppShell extends HTMLElement {
+    connectedCallback() {
+      if (this.shadowRoot) return;
+      this.attachShadow({ mode: "open" }).innerHTML =
+        '<div id="w" style="display:flex;flex-wrap:wrap;gap:7px"></div>';
+    }
+  }
+  customElements.define("app-shell", AppShell);
+
+  const app = document.createElement("app-shell");
+  document.getElementById("widget-mount").append(app);
+  const widget = app.shadowRoot.getElementById("w");
+  for (let position = 1; position <= TOTAL; position++) {
+    const disabled = ENABLED.includes(position) ? "" : "disabled";
+    widget.insertAdjacentHTML("beforeend", `
+      <masked-field>
+        <input slot="input" type="password" name="password-${position - 1}" ${disabled}>
+        <span slot="after">${position}</span>
+      </masked-field>`);
+  }
+</script>
+<script src="/src/content.js"></script>
+</body>
+</html>

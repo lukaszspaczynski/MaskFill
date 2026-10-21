@@ -34,6 +34,7 @@ tools/build.sh [Debug|Release]   # build app + extension (ad-hoc signed)
 tools/run.sh   [Debug|Release]   # build, then launch the app to register it with Safari
 tools/install.sh [Debug|Release] # install to /Applications; use when Safari will not list the extension
 tools/test-content.sh            # run the content-script tests headless (needs Google Chrome)
+tools/screenshots.sh             # regenerate docs/screenshots/ for the README (needs Google Chrome)
 python3 tools/make-icons.py      # regenerate the placeholder icons
 node --check src/content.js      # syntax check; there is no JS toolchain
 ```
