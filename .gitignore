@@ -16,3 +16,6 @@ keys/signing-private.jwk
 # Claude Code local settings
 .claude/settings.local.json
 .claude/.headroom_*
+
+# Serena (local code-intelligence tool)
+.serena/
