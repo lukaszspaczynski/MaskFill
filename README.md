@@ -6,6 +6,10 @@ fill that. This extension can: on an explicit click it types only the characters
 the bank is currently asking for, taking the password from your password manager
 and keeping nothing.
 
+![The popup has filled only positions 10, 14, 15, 17 and 19 of a 32-character masked-password widget](docs/screenshots/fill.png)
+
+<!-- TODO: docs/screenshots/demo.gif -- recording of the fill in Safari -->
+
 Ships with a rule for Moje ING and lets you add your own: each rule says which
 addresses it covers, how to find the character boxes, and how to read the
 position number off them. Rules can also be imported as signed, encrypted
@@ -27,6 +31,9 @@ step, no dependencies — wrapped in the macOS container app Safari requires.
   from (`name`, `id`, label, printed text or DOM order) and a regex — and
   applies it. Reading the position from an attribute rather than counting boxes
   means a page that omits a box cannot silently shift every other position.
+
+  <img src="docs/screenshots/rules.png" width="560" alt="Settings page: two editable rules with their addresses, selector and position source, and a locked paid rule showing only its address">
+
 - **Real-world markup.** ING renders the widget with Lit inside nested open
   shadow roots, so the content script walks shadow trees to find the inputs. The
   framework also keeps its own copy of each value, so filling goes through the
@@ -107,6 +114,7 @@ Open the HTML fixtures in a browser to see the same checks visually.
 | `rules/`  | the ING rule as plaintext source and as a signed package      |
 | `xcode/`  | container app Safari requires; the native handler is a stub   |
 | `tools/`  | build/run scripts, test fixtures, key and signing tools       |
+| `docs/`   | README screenshots                                            |
 
 ## Writing a rule for another site
 
